@@ -1,0 +1,27 @@
+# Wymagane zależności dla Compass - Audytor SEO/AEO/GEO
+
+# Core dependencies
+aiohttp>=3.8.0
+beautifulsoup4>=4.11.0
+lxml>=4.9.0
+url-normalize>=1.4.3
+tldextract>=3.4.0
+
+# Structured data extraction
+extruct>=0.13.0
+w3lib>=2.1.0
+
+# Optional: Progress bars
+tqdm>=4.64.0
+
+# Optional: Content extraction
+trafilatura>=1.4.0
+
+# Optional: Word reports
+python-docx>=0.8.11
+
+# Optional: CSV reports
+pandas>=1.5.0
+
+# Optional: AI Summary
+openai>=1.0.0
