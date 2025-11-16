@@ -88,7 +88,7 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     # =========================
     # OKŁADKA RAPORTU + KPI
     # =========================
-    title = doc.add_heading('Audyt SEO / AEO / GEO', 0)
+    title = doc.add_heading('SEO / AEO / GEO Audit', 0)
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     title_run = title.runs[0]
     title_run.font.color.rgb = RGBColor(31, 71, 136)
@@ -102,14 +102,14 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run(f"Data audytu: {summary['generated_at']}")
+    run = p.add_run(f"Audit-Datum: {summary['generated_at']}")
     run.font.size = Pt(10)
     run.italic = True
     run.font.color.rgb = RGBColor(120, 120, 120)
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run("Adresaci: Zarząd / Marketing / Zespół IT")
+    run = p.add_run("Adressaten: Geschäftsführung / Marketing / IT-Team")
     run.font.size = Pt(9)
     run.font.color.rgb = RGBColor(120, 120, 120)
 
@@ -120,14 +120,14 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     kpi_table.style = 'Light Shading Accent 1'
 
     hdr = kpi_table.rows[0].cells
-    hdr[0].text = "🎯 Kluczowy wynik"
-    hdr[1].text = "✅ Stabilność techniczna"
-    hdr[2].text = "📱 Mobilność"
+    hdr[0].text = "🎯 Hauptergebnis"
+    hdr[1].text = "✅ Technische Stabilität"
+    hdr[2].text = "📱 Mobilität"
 
     kpis = [
-        ("Wynik audytu", f"{summary['overall_score']}/100", summary['overall_grade']),
-        ("Strony OK (200)", summary['pages_ok'], f"z {summary['pages_analyzed']} analizowanych"),
-        ("Mobile-friendly", f"{summary['mobile_percentage']}%", f"{summary['mobile_friendly_pages']} stron"),
+        ("Audit-Ergebnis", f"{summary['overall_score']}/100", summary['overall_grade']),
+        ("Seiten OK (200)", summary['pages_ok'], f"von {summary['pages_analyzed']} analysierten"),
+        ("Mobile-friendly", f"{summary['mobile_percentage']}%", f"{summary['mobile_friendly_pages']} Seiten"),
     ]
 
     row = kpi_table.rows[1].cells
@@ -146,7 +146,7 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
 
     # WYNIK AUDYTU jako wyróżniony box
     box = doc.add_paragraph()
-    run = box.add_run(f"WYNIK AUDYTU: {summary['overall_score']}/100  ({summary['overall_grade']})")
+    run = box.add_run(f"AUDIT-ERGEBNIS: {summary['overall_score']}/100  ({summary['overall_grade']})")
     run.font.size = Pt(26)
     run.bold = True
     run.font.color.rgb = RGBColor(31, 71, 136)
@@ -154,13 +154,13 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     doc.add_paragraph()
 
     # SKŁAD OCENY OGÓLNEJ
-    add_section_heading(doc, 'Skład oceny ogólnej', level=3)
+    add_section_heading(doc, 'Zusammensetzung der Gesamtbewertung', level=3)
     scoring_table = doc.add_table(rows=1, cols=3)
     scoring_table.style = 'Light Grid Accent 1'
     hdr = scoring_table.rows[0].cells
-    hdr[0].text = 'Kategoria'
-    hdr[1].text = 'Wartość (x z y)'
-    hdr[2].text = 'Opis'
+    hdr[0].text = 'Kategorie'
+    hdr[1].text = 'Wert (x von y)'
+    hdr[2].text = 'Beschreibung'
 
     # Obliczenie wartości dla każdej kategorii
     pages = max(1, summary['pages_analyzed'])
@@ -197,12 +197,12 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     security_text = f"{security_value} z 20 ({security_pct:.1f}%)"
 
     scoring_components = [
-        ('Dostępność (HTTP 200)', availability_text, 'Procent stron bez błędów HTTP (4xx, 5xx)'),
-        ('Meta tagi', meta_text, 'Obecność i jakość Title oraz Description'),
-        ('Mobile-friendly', mobile_text, 'Responsywność i meta viewport'),
-        ('Schema.org', schema_text, 'Dane strukturalne JSON-LD'),
-        ('E-E-A-T', eeat_text, 'Eksperckość, Autorytet, Zaufanie'),
-        ('Bezpieczeństwo', security_text, 'HTTPS, Security Headers, brak mixed content'),
+        ('Verfügbarkeit (HTTP 200)', availability_text, 'Prozentsatz der Seiten ohne HTTP-Fehler (4xx, 5xx)'),
+        ('Meta-Tags', meta_text, 'Vorhandensein und Qualität von Title und Description'),
+        ('Mobile-friendly', mobile_text, 'Responsive Design und Meta Viewport'),
+        ('Schema.org', schema_text, 'Strukturierte Daten JSON-LD'),
+        ('E-E-A-T', eeat_text, 'Expertise, Autorität, Vertrauen'),
+        ('Sicherheit', security_text, 'HTTPS, Security Headers, kein Mixed Content'),
     ]
 
     for category, weight, description in scoring_components:
@@ -214,33 +214,33 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     doc.add_paragraph()
 
     # Najważniejsze problemy z licznikami X/Y i opisami
-    add_section_heading(doc, 'Najważniejsze problemy', level=2, icon='⚠️')
+    add_section_heading(doc, 'Wichtigste Probleme', level=2, icon='⚠️')
 
     # Słownik z opisami problemów
     problem_descriptions = {
-        "pages_with_errors": "Strony z kodami błędów HTTP (4xx, 5xx). Uniemożliwiają indeksację i powodują utratę ruchu.",
-        "missing_title": "Każda strona potrzebuje unikalnego tagu <title> (50–60 znaków) dla lepszej widoczności w wynikach wyszukiwania.",
-        "missing_description": "Meta description (150–160 znaków) to pierwszy kontakt użytkownika z Twoją stroną w wynikach Google.",
-        "missing_canonical": "Tag canonical zapobiega problemom z duplikacją treści i pomaga Google wybrać właściwą wersję strony.",
-        "pages_without_viewport": "Brak meta viewport - wymaga ręcznej weryfikacji wyświetlania na urządzeniach mobilnych.",
-        "pages_without_schema": "Dane strukturalne (Schema.org) pomagają Google lepiej zrozumieć zawartość i wyświetlać rich snippets.",
-        "pages_poor_security": "Słabe zabezpieczenia (<50%). Brak security headers naraża użytkowników i obniża zaufanie do witryny.",
-        "thin_content_pages": "Strony z mniej niż 300 słowami. Google preferuje wartościowe, szczegółowe treści.",
-        "pages_weak_eeat": "Słabe sygnały E-E-A-T (<50%). Dodaj autora, datę publikacji, certyfikaty i linki do wiarygodnych źródeł.",
+        "pages_with_errors": "Seiten mit HTTP-Fehlercodes (4xx, 5xx). Sie verhindern die Indexierung und führen zu Traffic-Verlust.",
+        "missing_title": "Jede Seite benötigt ein eindeutiges <title>-Tag (50–60 Zeichen) für bessere Sichtbarkeit in Suchergebnissen.",
+        "missing_description": "Meta Description (150–160 Zeichen) ist der erste Kontakt des Nutzers mit Ihrer Seite in Google-Ergebnissen.",
+        "missing_canonical": "Das Canonical-Tag verhindert Probleme mit doppelten Inhalten und hilft Google, die richtige Seitenversion zu wählen.",
+        "pages_without_viewport": "Fehlendes Meta Viewport - erfordert manuelle Überprüfung der Darstellung auf Mobilgeräten.",
+        "pages_without_schema": "Strukturierte Daten (Schema.org) helfen Google, Inhalte besser zu verstehen und Rich Snippets anzuzeigen.",
+        "pages_poor_security": "Schwache Sicherheit (<50%). Fehlende Security Headers gefährden Nutzer und reduzieren das Vertrauen.",
+        "thin_content_pages": "Seiten mit weniger als 300 Wörtern. Google bevorzugt wertvolle, detaillierte Inhalte.",
+        "pages_weak_eeat": "Schwache E-E-A-T-Signale (<50%). Fügen Sie Autor, Veröffentlichungsdatum, Zertifikate und Links zu vertrauenswürdigen Quellen hinzu.",
     }
 
     top_issues = [
-        ("Błędy HTTP (4xx/5xx)", summary["pages_with_errors"], summary["pages_analyzed"], "pages_with_errors"),
-        ("Brak Title", summary["missing_title"], summary["pages_analyzed"], "missing_title"),
-        ("Brak Meta Description", summary["missing_description"], summary["pages_analyzed"], "missing_description"),
-        ("Brak canonical", summary["missing_canonical"], summary["pages_analyzed"], "missing_canonical"),
-        ("Brak meta viewport (mobile)", summary["pages_without_viewport"], summary["pages_analyzed"],
+        ("HTTP-Fehler (4xx/5xx)", summary["pages_with_errors"], summary["pages_analyzed"], "pages_with_errors"),
+        ("Fehlender Title", summary["missing_title"], summary["pages_analyzed"], "missing_title"),
+        ("Fehlende Meta Description", summary["missing_description"], summary["pages_analyzed"], "missing_description"),
+        ("Fehlende Canonical", summary["missing_canonical"], summary["pages_analyzed"], "missing_canonical"),
+        ("Fehlendes Meta Viewport (Mobile)", summary["pages_without_viewport"], summary["pages_analyzed"],
          "pages_without_viewport"),
-        ("Brak Schema.org", summary["pages_without_schema"], summary["pages_analyzed"], "pages_without_schema"),
-        ("Słabe bezpieczeństwo (<50%)", summary["pages_poor_security"], summary["pages_analyzed"],
+        ("Fehlendes Schema.org", summary["pages_without_schema"], summary["pages_analyzed"], "pages_without_schema"),
+        ("Schwache Sicherheit (<50%)", summary["pages_poor_security"], summary["pages_analyzed"],
          "pages_poor_security"),
-        ("Cienka treść (<300 słów)", summary["thin_content_pages"], summary["pages_analyzed"], "thin_content_pages"),
-        ("Słabe E-E-A-T (<50%)", summary["pages_weak_eeat"], summary["pages_analyzed"], "pages_weak_eeat"),
+        ("Dünner Inhalt (<300 Wörter)", summary["thin_content_pages"], summary["pages_analyzed"], "thin_content_pages"),
+        ("Schwaches E-E-A-T (<50%)", summary["pages_weak_eeat"], summary["pages_analyzed"], "pages_weak_eeat"),
     ]
 
     for label, problem_count, total_pages, key in sorted(top_issues, key=lambda kv: kv[1], reverse=True)[:6]:
@@ -259,21 +259,21 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     # =========================
     # SPIS TREŚCI
     # =========================
-    add_section_heading(doc, 'Spis treści', 1, icon='📋')
+    add_section_heading(doc, 'Inhaltsverzeichnis', 1, icon='📋')
     toc_items = [
-        "1. Executive Summary – Kluczowe liczby",
-        "2. Priorytety (od krytycznych do lekkich)",
-        "3. Analiza Meta Tagów",
-        "4. Analiza Techniczna SEO",
-        "5. Mobilność i Responsywność",
-        "6. Open Graph i Twitter Cards",
-        "7. Dane Strukturalne (Schema.org)",
+        "1. Executive Summary – Kernzahlen",
+        "2. Prioritäten (von kritisch bis gering)",
+        "3. Meta-Tag-Analyse",
+        "4. Technische SEO-Analyse",
+        "5. Mobilität und Responsive Design",
+        "6. Open Graph und Twitter Cards",
+        "7. Strukturierte Daten (Schema.org)",
         "8. E-E-A-T",
         "9. Local SEO (NAP)",
-        "10. Jakość Treści",
-        "11. Bezpieczeństwo (Security Headers)",
-        "12. Legenda i objaśnienia",
-        "13. AI-Powered Executive Summary",
+        "10. Inhaltsqualität",
+        "11. Sicherheit (Security Headers)",
+        "12. Legende und Erläuterungen",
+        "13. KI-gestützte Zusammenfassung",
     ]
     for item in toc_items:
         p = doc.add_paragraph(item, style='List Number')
@@ -282,11 +282,11 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     # =========================
     # 1. EXECUTIVE SUMMARY
     # =========================
-    add_section_heading(doc, '1. Executive Summary – Kluczowe liczby', 1, icon='📊')
-    add_section_heading(doc, 'Szybkie podsumowanie SEO', 2, icon='📌')
+    add_section_heading(doc, '1. Executive Summary – Kernzahlen', 1, icon='📊')
+    add_section_heading(doc, 'Schnelle SEO-Zusammenfassung', 2, icon='📌')
 
     p = doc.add_paragraph()
-    run = p.add_run('Stan strony w pigułce:\n')
+    run = p.add_run('Status der Website auf einen Blick:\n')
     run.font.size = Pt(11)
     run.bold = True
 
@@ -299,26 +299,26 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
         'pages_without_schema']
 
     if seo_critical == 0 and seo_warnings < 10:
-        seo_status = "✅ Świetnie!"
+        seo_status = "✅ Ausgezeichnet!"
         seo_color = RGBColor(0, 150, 0)
-        seo_text = "Drobne optymalizacje – fundamenty SEO są w dobrej kondycji."
+        seo_text = "Kleinere Optimierungen – SEO-Grundlagen in gutem Zustand."
     elif seo_critical < 5 and seo_warnings < 30:
-        seo_status = "⚠️ Do poprawy"
+        seo_status = "⚠️ Verbesserungsbedarf"
         seo_color = RGBColor(200, 100, 0)
-        seo_text = f"Problemy krytyczne: {seo_critical} | Ostrzeżenia: {seo_warnings}"
+        seo_text = f"Kritische Probleme: {seo_critical} | Warnungen: {seo_warnings}"
     else:
-        seo_status = "🔴 Wymaga uwagi!"
+        seo_status = "🔴 Erfordert Aufmerksamkeit!"
         seo_color = RGBColor(200, 0, 0)
         seo_text = (
-            f"Problemy krytyczne: {seo_critical} (błędy 4xx, brak SSL/Title/Description) | "
-            f"Ostrzeżenia: {seo_warnings} (długość meta, canonical, schema)"
+            f"Kritische Probleme: {seo_critical} (4xx-Fehler, fehlendes SSL/Title/Description) | "
+            f"Warnungen: {seo_warnings} (Meta-Länge, Canonical, Schema)"
         )
 
-    add_status_line(doc, "Status SEO", seo_status, seo_color, extra=seo_text)
+    add_status_line(doc, "SEO-Status", seo_status, seo_color, extra=seo_text)
 
     doc.add_paragraph()
     p = doc.add_paragraph()
-    run = p.add_run('🎯 Top 3 priorytety na najbliższy sprint')
+    run = p.add_run('🎯 Top 3 Prioritäten für den nächsten Sprint')
     run.font.size = Pt(12)
     run.bold = True
 
@@ -328,48 +328,48 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     if summary['pages_with_errors'] > 0:
         pct = round((summary['pages_with_errors'] / total_pages) * 100, 1)
         priorities.append({
-            'text': f"Napraw {summary['pages_with_errors']}/{total_pages} stron z błędami HTTP 4xx ({pct}%)",
-            'desc': "Strony niedostępne dla użytkowników i botów Google",
+            'text': f"Beheben Sie {summary['pages_with_errors']}/{total_pages} Seiten mit HTTP 4xx-Fehlern ({pct}%)",
+            'desc': "Seiten nicht erreichbar für Nutzer und Google-Bots",
             'count': summary['pages_with_errors']
         })
 
     if summary['missing_title'] > 0:
         pct = round((summary['missing_title'] / total_pages) * 100, 1)
         priorities.append({
-            'text': f"Dodaj Title do {summary['missing_title']}/{total_pages} stron ({pct}%)",
-            'desc': "Brak tytułu = niewidoczność w wynikach Google",
+            'text': f"Fügen Sie Title zu {summary['missing_title']}/{total_pages} Seiten hinzu ({pct}%)",
+            'desc': "Fehlender Titel = Unsichtbarkeit in Google-Ergebnissen",
             'count': summary['missing_title']
         })
 
     if summary['missing_description'] > 0 and len(priorities) < 3:
         pct = round((summary['missing_description'] / total_pages) * 100, 1)
         priorities.append({
-            'text': f"Dodaj Meta Description do {summary['missing_description']}/{total_pages} stron ({pct}%)",
-            'desc': "Wpływa na CTR (Click-Through Rate) z wyszukiwarki",
+            'text': f"Fügen Sie Meta Description zu {summary['missing_description']}/{total_pages} Seiten hinzu ({pct}%)",
+            'desc': "Beeinflusst die CTR (Click-Through Rate) aus der Suche",
             'count': summary['missing_description']
         })
 
     if summary['pages_without_schema'] > 0 and len(priorities) < 3:
         pct = round((summary['pages_without_schema'] / total_pages) * 100, 1)
         priorities.append({
-            'text': f"Dodaj Schema.org do {summary['pages_without_schema']}/{total_pages} stron ({pct}%)",
-            'desc': "Brak rich snippets w Google (gwiazdki, FAQ, breadcrumbs)",
+            'text': f"Fügen Sie Schema.org zu {summary['pages_without_schema']}/{total_pages} Seiten hinzu ({pct}%)",
+            'desc': "Keine Rich Snippets in Google (Sterne, FAQ, Breadcrumbs)",
             'count': summary['pages_without_schema']
         })
 
     if summary['missing_canonical'] > 0 and len(priorities) < 3:
         pct = round((summary['missing_canonical'] / total_pages) * 100, 1)
         priorities.append({
-            'text': f"Dodaj Canonical do {summary['missing_canonical']}/{total_pages} stron ({pct}%)",
-            'desc': "Zapobiega problemom z duplikacją treści",
+            'text': f"Fügen Sie Canonical zu {summary['missing_canonical']}/{total_pages} Seiten hinzu ({pct}%)",
+            'desc': "Verhindert Probleme mit doppelten Inhalten",
             'count': summary['missing_canonical']
         })
 
     if summary['pages_without_viewport'] > 0 and len(priorities) < 3:
         pct = round((summary['pages_without_viewport'] / total_pages) * 100, 1)
         priorities.append({
-            'text': f"Sprawdź wyświetlanie mobilne {summary['pages_without_viewport']}/{total_pages} stron bez viewport ({pct}%)",
-            'desc': "Wymaga ręcznej weryfikacji na urządzeniach mobilnych",
+            'text': f"Überprüfen Sie mobile Darstellung von {summary['pages_without_viewport']}/{total_pages} Seiten ohne Viewport ({pct}%)",
+            'desc': "Erfordert manuelle Überprüfung auf Mobilgeräten",
             'count': summary['pages_without_viewport']
         })
 
@@ -380,7 +380,7 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
         p = doc.add_paragraph(style='List Number')
         run = p.add_run(f"{i}. {pr['text']}\n")
         run.bold = True
-        run2 = p.add_run(f"   Efekt biznesowy: {pr['desc']}")
+        run2 = p.add_run(f"   Geschäftlicher Nutzen: {pr['desc']}")
         run2.font.size = Pt(10)
         run2.italic = True
         run2.font.color.rgb = RGBColor(80, 80, 80)
@@ -389,19 +389,19 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
 
     # Krótkie "co zyskasz"
     p = doc.add_paragraph()
-    run = p.add_run("Co zyskasz po wdrożeniu rekomendacji:")
+    run = p.add_run("Was Sie durch Umsetzung der Empfehlungen gewinnen:")
     run.bold = True
-    doc.add_paragraph("• więcej ruchu organicznego z Google", style='List Bullet')
-    doc.add_paragraph("• wyższy CTR z wyników wyszukiwania i social media", style='List Bullet')
-    doc.add_paragraph("• lepsze bezpieczeństwo i zaufanie użytkowników", style='List Bullet')
+    doc.add_paragraph("• mehr organischer Traffic von Google", style='List Bullet')
+    doc.add_paragraph("• höhere CTR aus Suchergebnissen und Social Media", style='List Bullet')
+    doc.add_paragraph("• bessere Sicherheit und Nutzervertrauen", style='List Bullet')
 
     doc.add_paragraph()
     stats_table = doc.add_table(rows=1, cols=3)
     stats_table.style = 'Light Grid Accent 1'
     hdr = stats_table.rows[0].cells
-    hdr[0].text = 'Metryka'
-    hdr[1].text = 'Wartość'
-    hdr[2].text = 'Opis'
+    hdr[0].text = 'Metrik'
+    hdr[1].text = 'Wert'
+    hdr[2].text = 'Beschreibung'
 
     # Funkcja pomocnicza do dodawania wierszy z opisem
     def add_metric_row(metric_name, value, description="", emoji=None):
@@ -413,220 +413,220 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
 
     # Metryki z opisami
     add_metric_row(
-        'Przeskanowanych stron',
+        'Gescannte Seiten',
         f"{summary['pages_crawled']}",
-        "Całkowita liczba odkrytych URL-i podczas crawlingu",
+        "Gesamtzahl der während des Crawlings entdeckten URLs",
         emoji="🌐"
     )
 
     add_metric_row(
-        'Przeanalizowanych stron',
-        f"{summary['pages_analyzed']} (wykluczono {summary['pages_excluded']})",
-        "Strony poddane analizie SEO (bez technicznych URL jak /cdn-cgi/*)",
+        'Analysierte Seiten',
+        f"{summary['pages_analyzed']} ({summary['pages_excluded']} ausgeschlossen)",
+        "Seiten die einer SEO-Analyse unterzogen wurden (ohne technische URLs wie /cdn-cgi/*)",
         emoji="📄"
     )
 
     add_metric_row(
-        'Strony OK (200)',
+        'Seiten OK (200)',
         f"✅ {summary['pages_ok']}",
-        "Strony działające poprawnie, zwracające kod HTTP 200",
+        "Korrekt funktionierende Seiten, die HTTP-Code 200 zurückgeben",
         emoji="✅"
     )
 
     add_metric_row(
-        'Strony z błędami (4xx)',
+        'Seiten mit Fehlern (4xx)',
         f"🔴 {summary['pages_with_errors']}",
-        "Błędy klienta (404 Not Found, 403 Forbidden itp.) – blokują indeksację",
+        "Client-Fehler (404 Not Found, 403 Forbidden etc.) – blockieren Indexierung",
         emoji="🚫"
     )
 
     add_metric_row(
-        'Brak Title',
+        'Fehlender Title',
         f"{summary['missing_title']}",
-        "Strony bez tagu <title> – kluczowego dla pozycjonowania i CTR",
+        "Seiten ohne <title>-Tag – entscheidend für Ranking und CTR",
         emoji="🧾"
     )
 
     add_metric_row(
-        'Brak Description',
+        'Fehlende Description',
         f"{summary['missing_description']}",
-        "Strony bez <meta name=\"description\"> – wpływa na snippet w Google",
+        "Seiten ohne <meta name=\"description\"> – beeinflusst Snippet in Google",
         emoji="📝"
     )
 
     add_metric_row(
-        'Problemy Title (długość)',
+        'Title-Probleme (Länge)',
         f"{summary['title_issues']}",
-        "Title zbyt krótki (<30 znaków) lub za długi (>65) – Google może obciąć",
+        "Title zu kurz (<30 Zeichen) oder zu lang (>65) – Google kann abschneiden",
         emoji="📏"
     )
 
     add_metric_row(
-        'Problemy Description (długość)',
+        'Description-Probleme (Länge)',
         f"{summary['description_issues']}",
-        "Description poza zakresem 120–165 znaków – może być obcięty lub zbyt krótki",
+        "Description außerhalb des Bereichs 120–165 Zeichen – kann abgeschnitten oder zu kurz sein",
         emoji="📐"
     )
 
     add_metric_row(
-        'Duplikaty Title',
+        'Title-Duplikate',
         f"{summary['duplicate_titles']}",
-        "Różne strony z identycznym tytułem – konfunduje Google i użytkowników",
+        "Verschiedene Seiten mit identischem Titel – verwirrt Google und Nutzer",
         emoji="🔁"
     )
 
     add_metric_row(
-        'Duplikaty Description',
+        'Description-Duplikate',
         f"{summary['duplicate_descriptions']}",
-        "Różne strony z tą samą meta description – obniża unikatowość",
+        "Verschiedene Seiten mit derselben Meta Description – verringert Einzigartigkeit",
         emoji="🔁"
     )
 
     add_metric_row(
-        'Brak Canonical',
+        'Fehlende Canonical',
         f"{summary['missing_canonical']}",
-        "Brak tagu <link rel=\"canonical\"> – prowadzi do problemów z duplikacją treści",
+        "Fehlendes <link rel=\"canonical\">-Tag – führt zu Problemen mit doppelten Inhalten",
         emoji="🏷️"
     )
 
     add_metric_row(
-        'Brak H1',
+        'Fehlende H1',
         f"{summary['missing_h1']}",
-        "Strona bez nagłówka głównego <h1> – kluczowy element struktury i SEO",
+        "Seite ohne Hauptüberschrift <h1> – Schlüsselelement für Struktur und SEO",
         emoji="🔤"
     )
 
     add_metric_row(
-        'Wiele H1',
+        'Mehrere H1',
         f"{summary['multiple_h1']}",
-        "Strona z >1 nagłówkiem H1 – może wprowadzać wyszukiwarki w błąd",
+        "Seite mit >1 H1-Überschrift – kann Suchmaschinen verwirren",
         emoji="⚠️"
     )
 
     add_metric_row(
-        'Obrazy bez ALT (łączna liczba)',
+        'Bilder ohne ALT (Gesamtzahl)',
         f"{summary['total_images_without_alt']}",
-        "Obrazki bez atrybutu alt – problem dla SEO, dostępności i obrazków Google",
+        "Bilder ohne alt-Attribut – Problem für SEO, Barrierefreiheit und Google Bilder",
         emoji="🖼️"
     )
 
     add_metric_row(
         'Mobile-friendly',
         f"{summary['mobile_friendly_pages']} ({summary['mobile_percentage']}%)",
-        "Strony dostosowane do urządzeń mobilnych (responsive design)",
+        "Für Mobilgeräte optimierte Seiten (Responsive Design)",
         emoji="📱"
     )
 
     add_metric_row(
-        'Brak meta viewport',
+        'Fehlendes Meta Viewport',
         f"{summary['pages_without_viewport']}",
-        "Strony bez <meta name=\"viewport\"> – nie skalują się na mobile",
+        "Seiten ohne <meta name=\"viewport\"> – skalieren nicht auf Mobile",
         emoji="🔍"
     )
 
     add_metric_row(
-        'Brak Open Graph',
+        'Fehlendes Open Graph',
         f"{summary['pages_without_og']}",
-        "Strony bez meta tagów OG (Facebook, LinkedIn) – brzydki podgląd linków",
+        "Seiten ohne OG Meta-Tags (Facebook, LinkedIn) – hässliche Link-Vorschau",
         emoji="📢"
     )
 
     add_metric_row(
-        'Brak Twitter Cards',
+        'Fehlende Twitter Cards',
         f"{summary['pages_without_twitter']}",
-        "Strony bez Twitter Card – brak atrakcyjnego podglądu na X (Twitter)",
+        "Seiten ohne Twitter Card – keine attraktive Vorschau auf X (Twitter)",
         emoji="🐦"
     )
 
     add_metric_row(
-        'Strony z danymi strukturalnymi',
+        'Seiten mit strukturierten Daten',
         f"{summary['pages_with_schema']}",
-        "Liczba stron z Schema.org (JSON-LD) – umożliwia rich snippets w Google",
+        "Anzahl der Seiten mit Schema.org (JSON-LD) – ermöglicht Rich Snippets in Google",
         emoji="🔗"
     )
 
     add_metric_row(
-        'Brak Schema',
+        'Fehlendes Schema',
         f"{summary['pages_without_schema']}",
-        "Strony bez Schema.org – tracisz gwiazdki, FAQ, breadcrumbs w wynikach",
+        "Seiten ohne Schema.org – Sie verlieren Sterne, FAQ, Breadcrumbs in Ergebnissen",
         emoji="⚠️"
     )
 
     add_metric_row(
-        'Śr. typów Schema/stronę',
+        'Durchschn. Schema-Typen/Seite',
         f"{summary['avg_schema_types']}",
-        "Ile różnych typów Schema jest na stronie (Article, Product, FAQ, etc.)",
+        "Wie viele verschiedene Schema-Typen auf der Seite sind (Article, Product, FAQ, etc.)",
         emoji="📚"
     )
 
     add_metric_row(
-        'Śr. E-E-A-T',
+        'Durchschn. E-E-A-T',
         f"{summary['avg_eeat_score']}%",
-        "Experience, Expertise, Authoritativeness, Trustworthiness – sygnały jakości Google",
+        "Experience, Expertise, Authoritativeness, Trustworthiness – Google-Qualitätssignale",
         emoji="🏆"
     )
 
     add_metric_row(
-        'Słabe E-E-A-T',
+        'Schwaches E-E-A-T',
         f"{summary['pages_weak_eeat']}",
-        "Strony z niskim E-E-A-T (<50%): brak autora, dat, certyfikatów, źródeł",
+        "Seiten mit niedrigem E-E-A-T (<50%): fehlender Autor, Datum, Zertifikate, Quellen",
         emoji="⚠️"
     )
 
     add_metric_row(
         'Local NAP OK',
         f"{summary['local_optimized_pages']}",
-        "Strony z poprawnymi danymi NAP (Name, Address, Phone) – istotne dla firm lokalnych",
+        "Seiten mit korrekten NAP-Daten (Name, Address, Phone) – wichtig für lokale Unternehmen",
         emoji="📍"
     )
 
     add_metric_row(
-        'Słaby Local SEO',
+        'Schwaches Local SEO',
         f"{summary['pages_poor_local_seo']}",
-        "Strony bez NAP, Schema LocalBusiness, linków do mapy – słabo dla SEO lokalnego",
+        "Seiten ohne NAP, Schema LocalBusiness, Kartenlinks – schlecht für lokales SEO",
         emoji="📉"
     )
 
     add_metric_row(
-        'Thin content (<300 słów)',
+        'Dünner Inhalt (<300 Wörter)',
         f"{summary['thin_content_pages']}",
-        "Strony z bardzo krótką treścią – Google może uznać za low-quality",
+        "Seiten mit sehr kurzem Inhalt – Google kann als Low-Quality einstufen",
         emoji="✂️"
     )
 
     add_metric_row(
-        'Śr. Security',
+        'Durchschn. Sicherheit',
         f"{summary['avg_security_score']}%",
-        "Średni poziom zabezpieczeń (HTTPS + security headers). {:.1f}% to bardzo nisko".format(
+        "Durchschnittliches Sicherheitsniveau (HTTPS + Security Headers). {:.1f}% ist sehr niedrig".format(
             summary['avg_security_score']),
         emoji="🔒"
     )
 
     add_metric_row(
-        'Słabe bezpieczeństwo',
+        'Schwache Sicherheit',
         f"{summary['pages_poor_security']}",
-        "Strony z oceną <50%: brak kluczowych nagłówków (HSTS, CSP, X-Frame-Options)",
+        "Seiten mit Bewertung <50%: fehlende kritische Header (HSTS, CSP, X-Frame-Options)",
         emoji="🛑"
     )
 
     add_metric_row(
-        'Brakujące security headers',
+        'Fehlende Security Headers',
         f"{summary['pages_missing_security_headers']}",
-        "Strony z <3 nagłówkami security. Sprawdź: HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy",
+        "Seiten mit <3 Security Headers. Prüfen Sie: HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy",
         emoji="🧱"
     )
 
     add_metric_row(
-        'Mixed content',
+        'Mixed Content',
         f"{summary['pages_with_mixed_content']}",
-        "Strony HTTPS z zasobami HTTP (obrazki, skrypty) – warning w przeglądarce",
+        "HTTPS-Seiten mit HTTP-Ressourcen (Bilder, Skripte) – Warnung im Browser",
         emoji="⚡"
     )
 
     add_metric_row(
-        'WYNIK AUDYTU',
+        'AUDIT-ERGEBNIS',
         f"{summary['overall_score']}/100 ({summary['overall_grade']})",
-        "Ocena łączna: Availability (30%) + Meta (15%) + Mobile (15%) + Schema (10%) + E-E-A-T (10%) + Security (20%)",
+        "Gesamtbewertung: Verfügbarkeit (30%) + Meta (15%) + Mobile (15%) + Schema (10%) + E-E-A-T (10%) + Sicherheit (20%)",
         emoji="🏁"
     )
 
@@ -635,24 +635,24 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     # =========================
     # 2. PRIORYTETY
     # =========================
-    add_section_heading(doc, '2. Priorytety (od krytycznych do lekkich)', 1, icon='🎯')
+    add_section_heading(doc, '2. Prioritäten (von kritisch bis gering)', 1, icon='🎯')
 
     if issues['critical_errors']:
-        add_section_heading(doc, 'Błędy HTTP (4xx)', 2, icon='🔴')
+        add_section_heading(doc, 'HTTP-Fehler (4xx)', 2, icon='🔴')
         p = doc.add_paragraph()
         total = summary['pages_analyzed']
         count = len(issues['critical_errors'])
         pct = round((count / total) * 100, 1) if total > 0 else 0
-        p.add_run(f"Znaleziono {count}/{total} stron z błędami 4xx ({pct}%).").bold = True
+        p.add_run(f"Gefunden: {count}/{total} Seiten mit 4xx-Fehlern ({pct}%).").bold = True
         doc.add_paragraph(
-            "Strony te są niedostępne dla użytkowników i robotów Google, co skutkuje:\n"
-            "• Utratą ruchu organicznego\n"
-            "• Negatywnym wpływem na UX\n"
-            "• Problemami z indeksacją"
+            "Diese Seiten sind für Nutzer und Google-Bots nicht erreichbar, was zu Folgendem führt:\n"
+            "• Verlust von organischem Traffic\n"
+            "• Negativer Einfluss auf UX\n"
+            "• Probleme bei der Indexierung"
         )
         doc.add_paragraph()
         p = doc.add_paragraph()
-        run = p.add_run("Problematyczne adresy:")
+        run = p.add_run("Problematische Adressen:")
         run.bold = True
         for err in issues['critical_errors'][:20]:
             status_code = err.get('status', 'N/A')
@@ -662,7 +662,7 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             else:
                 doc.add_paragraph(f"• {err['url']} – Status: {status_code}", style='List Bullet')
         if len(issues['critical_errors']) > 20:
-            doc.add_paragraph(f"...oraz {len(issues['critical_errors']) - 20} innych")
+            doc.add_paragraph(f"...sowie {len(issues['critical_errors']) - 20} weitere")
 
     if issues['missing_title'] or issues['title_issues'] or issues['missing_description'] or issues['description_issues'] or issues['missing_canonical']:
         add_section_heading(doc, 'Meta & Canonical', 2, icon='🟠')
@@ -673,22 +673,22 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             total = summary['pages_analyzed']
             count = len(issues['missing_title'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"Brakujące Meta Title: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"Fehlende Meta Title: {count}/{total} Seiten ({pct}%)")
             run.bold = True
             doc.add_paragraph(
-                "Tag <title> to pierwszy element, jaki użytkownik widzi w wynikach Google. Jego brak oznacza:"
+                "Das <title>-Tag ist das erste Element, das Nutzer in Google-Ergebnissen sehen. Sein Fehlen bedeutet:"
             )
-            doc.add_paragraph("• Brak kontroli nad tym, co Google wyświetli w SERP", style='List Bullet')
-            doc.add_paragraph("• Niższy CTR (Click-Through Rate)", style='List Bullet')
-            doc.add_paragraph("• Słabsze pozycjonowanie", style='List Bullet')
+            doc.add_paragraph("• Keine Kontrolle darüber, was Google in den SERPs anzeigt", style='List Bullet')
+            doc.add_paragraph("• Niedrigere CTR (Click-Through Rate)", style='List Bullet')
+            doc.add_paragraph("• Schlechteres Ranking", style='List Bullet')
             doc.add_paragraph()
             p = doc.add_paragraph()
-            run = p.add_run("Strony bez Title:")
+            run = p.add_run("Seiten ohne Title:")
             run.bold = True
             for url in issues['missing_title'][:15]:
                 doc.add_paragraph(f"• {url}", style='List Bullet')
             if len(issues['missing_title']) > 15:
-                doc.add_paragraph(f"...oraz {len(issues['missing_title']) - 15} innych")
+                doc.add_paragraph(f"...sowie {len(issues['missing_title']) - 15} weitere")
             doc.add_paragraph()
 
         if issues['title_issues']:
@@ -701,23 +701,23 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
                 total = summary['pages_analyzed']
                 count = len(too_short)
                 pct = round((count / total) * 100, 1) if total > 0 else 0
-                run = p.add_run(f"Meta Title za krótkie (<30 znaków): {count}/{total} stron ({pct}%)")
+                run = p.add_run(f"Meta Title zu kurz (<30 Zeichen): {count}/{total} Seiten ({pct}%)")
                 run.bold = True
                 doc.add_paragraph(
-                    "Zbyt krótki tytuł nie w pełni wykorzystuje dostępne miejsce w wynikach Google (50-60 znaków). "
-                    "Tracisz możliwość zawarcia kluczowych słów i przyciągnięcia uwagi użytkowników."
+                    "Ein zu kurzer Titel nutzt den verfügbaren Platz in Google-Ergebnissen (50-60 Zeichen) nicht voll aus. "
+                    "Sie verlieren die Möglichkeit, Schlüsselwörter einzubauen und die Aufmerksamkeit der Nutzer zu erregen."
                 )
                 doc.add_paragraph()
                 p = doc.add_paragraph()
-                run = p.add_run("Strony z za krótkim Title:")
+                run = p.add_run("Seiten mit zu kurzem Title:")
                 run.bold = True
                 for item in too_short[:15]:
                     url = item['url']
                     title = item.get('title', '')[:80]
                     length = item.get('length', 0)
-                    doc.add_paragraph(f"• {url}\n  Title ({length} znaków): \"{title}\"", style='List Bullet')
+                    doc.add_paragraph(f"• {url}\n  Title ({length} Zeichen): \"{title}\"", style='List Bullet')
                 if len(too_short) > 15:
-                    doc.add_paragraph(f"...oraz {len(too_short) - 15} innych")
+                    doc.add_paragraph(f"...sowie {len(too_short) - 15} weitere")
                 doc.add_paragraph()
 
             if too_long:
@@ -725,23 +725,23 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
                 total = summary['pages_analyzed']
                 count = len(too_long)
                 pct = round((count / total) * 100, 1) if total > 0 else 0
-                run = p.add_run(f"Meta Title za długie (>65 znaków): {count}/{total} stron ({pct}%)")
+                run = p.add_run(f"Meta Title zu lang (>65 Zeichen): {count}/{total} Seiten ({pct}%)")
                 run.bold = True
                 doc.add_paragraph(
-                    "Zbyt długi tytuł zostanie obcięty w wynikach Google (wyświetlane jest ~50-60 znaków). "
-                    "Ważne informacje mogą nie być widoczne dla użytkowników."
+                    "Ein zu langer Titel wird in Google-Ergebnissen abgeschnitten (angezeigt werden ~50-60 Zeichen). "
+                    "Wichtige Informationen sind möglicherweise für Nutzer nicht sichtbar."
                 )
                 doc.add_paragraph()
                 p = doc.add_paragraph()
-                run = p.add_run("Strony z za długim Title:")
+                run = p.add_run("Seiten mit zu langem Title:")
                 run.bold = True
                 for item in too_long[:15]:
                     url = item['url']
                     title = item.get('title', '')[:100]
                     length = item.get('length', 0)
-                    doc.add_paragraph(f"• {url}\n  Title ({length} znaków): \"{title}...\"", style='List Bullet')
+                    doc.add_paragraph(f"• {url}\n  Title ({length} Zeichen): \"{title}...\"", style='List Bullet')
                 if len(too_long) > 15:
-                    doc.add_paragraph(f"...oraz {len(too_long) - 15} innych")
+                    doc.add_paragraph(f"...sowie {len(too_long) - 15} weitere")
                 doc.add_paragraph()
 
         # ===== META DESCRIPTION =====
@@ -750,20 +750,20 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             total = summary['pages_analyzed']
             count = len(issues['missing_description'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"Brakujące Meta Description: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"Fehlende Meta Description: {count}/{total} Seiten ({pct}%)")
             run.bold = True
-            doc.add_paragraph("Meta description to 'zachęta' do kliknięcia w wynikach wyszukiwania. Bez niej:")
-            doc.add_paragraph("• Google sam generuje opis (często nietrafiający w sedno)", style='List Bullet')
-            doc.add_paragraph("• Tracisz kontrolę nad przekazem marketingowym", style='List Bullet')
-            doc.add_paragraph("• CTR może spaść nawet o 30–40%", style='List Bullet')
+            doc.add_paragraph("Meta Description ist die 'Einladung' zum Klicken in Suchergebnissen. Ohne sie:")
+            doc.add_paragraph("• Google generiert selbst eine Beschreibung (oft nicht treffend)", style='List Bullet')
+            doc.add_paragraph("• Sie verlieren die Kontrolle über die Marketing-Botschaft", style='List Bullet')
+            doc.add_paragraph("• CTR kann um 30–40% sinken", style='List Bullet')
             doc.add_paragraph()
             p = doc.add_paragraph()
-            run = p.add_run("Strony bez Meta Description:")
+            run = p.add_run("Seiten ohne Meta Description:")
             run.bold = True
             for url in issues['missing_description'][:15]:
                 doc.add_paragraph(f"• {url}", style='List Bullet')
             if len(issues['missing_description']) > 15:
-                doc.add_paragraph(f"...oraz {len(issues['missing_description']) - 15} innych")
+                doc.add_paragraph(f"...sowie {len(issues['missing_description']) - 15} weitere")
             doc.add_paragraph()
 
         if issues['description_issues']:
@@ -776,22 +776,22 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
                 total = summary['pages_analyzed']
                 count = len(too_short_desc)
                 pct = round((count / total) * 100, 1) if total > 0 else 0
-                run = p.add_run(f"Meta Description za krótkie (<120 znaków): {count}/{total} stron ({pct}%)")
+                run = p.add_run(f"Meta Description zu kurz (<120 Zeichen): {count}/{total} Seiten ({pct}%)")
                 run.bold = True
                 doc.add_paragraph(
-                    "Zbyt krótki opis nie wykorzystuje dostępnego miejsca (120-165 znaków) i może nie przekonać użytkownika do kliknięcia."
+                    "Eine zu kurze Beschreibung nutzt den verfügbaren Platz (120-165 Zeichen) nicht aus und überzeugt Nutzer möglicherweise nicht zum Klicken."
                 )
                 doc.add_paragraph()
                 p = doc.add_paragraph()
-                run = p.add_run("Strony z za krótkim Description:")
+                run = p.add_run("Seiten mit zu kurzer Description:")
                 run.bold = True
                 for item in too_short_desc[:15]:
                     url = item['url']
                     desc = item.get('description', '')
                     length = item.get('length', 0)
-                    doc.add_paragraph(f"• {url}\n  Description ({length} znaków): \"{desc}\"", style='List Bullet')
+                    doc.add_paragraph(f"• {url}\n  Description ({length} Zeichen): \"{desc}\"", style='List Bullet')
                 if len(too_short_desc) > 15:
-                    doc.add_paragraph(f"...oraz {len(too_short_desc) - 15} innych")
+                    doc.add_paragraph(f"...sowie {len(too_short_desc) - 15} weitere")
                 doc.add_paragraph()
 
             if too_long_desc:
@@ -799,22 +799,22 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
                 total = summary['pages_analyzed']
                 count = len(too_long_desc)
                 pct = round((count / total) * 100, 1) if total > 0 else 0
-                run = p.add_run(f"Meta Description za długie (>165 znaków): {count}/{total} stron ({pct}%)")
+                run = p.add_run(f"Meta Description zu lang (>165 Zeichen): {count}/{total} Seiten ({pct}%)")
                 run.bold = True
                 doc.add_paragraph(
-                    "Zbyt długi opis zostanie obcięty w wynikach Google. Ważne informacje mogą być ukryte."
+                    "Eine zu lange Beschreibung wird in Google-Ergebnissen abgeschnitten. Wichtige Informationen können verborgen bleiben."
                 )
                 doc.add_paragraph()
                 p = doc.add_paragraph()
-                run = p.add_run("Strony z za długim Description:")
+                run = p.add_run("Seiten mit zu langer Description:")
                 run.bold = True
                 for item in too_long_desc[:15]:
                     url = item['url']
                     desc = item.get('description', '')
                     length = item.get('length', 0)
-                    doc.add_paragraph(f"• {url}\n  Description ({length} znaków): \"{desc}...\"", style='List Bullet')
+                    doc.add_paragraph(f"• {url}\n  Description ({length} Zeichen): \"{desc}...\"", style='List Bullet')
                 if len(too_long_desc) > 15:
-                    doc.add_paragraph(f"...oraz {len(too_long_desc) - 15} innych")
+                    doc.add_paragraph(f"...sowie {len(too_long_desc) - 15} weitere")
                 doc.add_paragraph()
 
         # ===== CANONICAL =====
@@ -823,43 +823,43 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             total = summary['pages_analyzed']
             count = len(issues['missing_canonical'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"Brak Canonical: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"Fehlende Canonical: {count}/{total} Seiten ({pct}%)")
             run.bold = True
             doc.add_paragraph(
-                "Tag canonical wskazuje Google, która wersja strony jest 'główna'. Jego brak prowadzi do:"
+                "Das Canonical-Tag zeigt Google, welche Seitenversion die 'Hauptversion' ist. Sein Fehlen führt zu:"
             )
             doc.add_paragraph(
-                "• Problemów z duplikacją treści (Google nie wie, którą wersję indeksować)",
+                "• Problemen mit doppelten Inhalten (Google weiß nicht, welche Version indexiert werden soll)",
                 style='List Bullet'
             )
-            doc.add_paragraph("• Rozproszenia 'mocy' linków między duplikatami", style='List Bullet')
-            doc.add_paragraph("• Słabszego pozycjonowania wszystkich wersji", style='List Bullet')
+            doc.add_paragraph("• Streuung der Link-'Power' zwischen Duplikaten", style='List Bullet')
+            doc.add_paragraph("• Schwächerem Ranking aller Versionen", style='List Bullet')
             doc.add_paragraph()
             p = doc.add_paragraph()
-            run = p.add_run("Strony bez Canonical:")
+            run = p.add_run("Seiten ohne Canonical:")
             run.bold = True
             for url in issues['missing_canonical'][:15]:
                 doc.add_paragraph(f"• {url}", style='List Bullet')
             if len(issues['missing_canonical']) > 15:
-                doc.add_paragraph(f"...oraz {len(issues['missing_canonical']) - 15} innych")
+                doc.add_paragraph(f"...sowie {len(issues['missing_canonical']) - 15} weitere")
             doc.add_paragraph()
 
     if issues['poor_security'] or issues['missing_security_headers']:
-        add_section_heading(doc, 'Bezpieczeństwo – niski poziom / brak nagłówków', 2, icon='🟠')
+        add_section_heading(doc, 'Sicherheit – niedriges Niveau / fehlende Header', 2, icon='🟠')
 
         if issues['poor_security']:
             p = doc.add_paragraph()
             total = summary['pages_analyzed']
             count = len(issues['poor_security'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"Słabe bezpieczeństwo: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"Schwache Sicherheit: {count}/{total} Seiten ({pct}%)")
             run.bold = True
             doc.add_paragraph(
-                "Strony z oceną bezpieczeństwa <50% mają braki w podstawowych nagłówkach zabezpieczających:"
+                "Seiten mit Sicherheitsbewertung <50% haben Mängel bei grundlegenden Sicherheitsheadern:"
             )
             doc.add_paragraph()
             p = doc.add_paragraph()
-            run = p.add_run("Przykłady stron ze słabym security:")
+            run = p.add_run("Beispiele für Seiten mit schwacher Sicherheit:")
             run.bold = True
             for item in issues['poor_security'][:10]:
                 url = item['url']
@@ -867,11 +867,11 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
                 missing = item.get('missing_headers', [])
                 if missing:
                     missing_str = ", ".join(missing[:3])
-                    doc.add_paragraph(f"• {url} ({sec_pct}%) – Brak: {missing_str}", style='List Bullet')
+                    doc.add_paragraph(f"• {url} ({sec_pct}%) – Fehlend: {missing_str}", style='List Bullet')
                 else:
                     doc.add_paragraph(f"• {url} ({sec_pct}%)", style='List Bullet')
             if len(issues['poor_security']) > 10:
-                doc.add_paragraph(f"...oraz {len(issues['poor_security']) - 10} innych")
+                doc.add_paragraph(f"...sowie {len(issues['poor_security']) - 10} weitere")
             doc.add_paragraph()
 
         if issues['missing_security_headers']:
@@ -880,31 +880,31 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             count = len(issues['missing_security_headers'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
             run = p.add_run(
-                f"Braki w security headers: {count}/{total} stron ({pct}%)"
+                f"Fehlende Security Headers: {count}/{total} Seiten ({pct}%)"
             )
             run.bold = True
             doc.add_paragraph(
-                "Strony z mniej niż 3 nagłówkami bezpieczeństwa są podatne na ataki. Brak odpowiednich headerów oznacza:"
+                "Seiten mit weniger als 3 Sicherheitsheadern sind anfällig für Angriffe. Fehlende Header bedeuten:"
             )
-            doc.add_paragraph("• Łatwiejsze przeprowadzenie ataków XSS, clickjacking", style='List Bullet')
-            doc.add_paragraph("• Brak wymuszenia HTTPS (możliwy man-in-the-middle)", style='List Bullet')
-            doc.add_paragraph("• Obniżone zaufanie użytkowników i Google", style='List Bullet')
+            doc.add_paragraph("• Leichtere Durchführung von XSS- und Clickjacking-Angriffen", style='List Bullet')
+            doc.add_paragraph("• Keine Erzwingung von HTTPS (Man-in-the-Middle möglich)", style='List Bullet')
+            doc.add_paragraph("• Verringertes Vertrauen von Nutzern und Google", style='List Bullet')
             doc.add_paragraph()
             p = doc.add_paragraph()
-            run = p.add_run("Kluczowe brakujące nagłówki:")
+            run = p.add_run("Wichtige fehlende Header:")
             run.bold = True
             p = doc.add_paragraph()
             run = p.add_run("• HSTS: ")
             run.bold = True
-            p.add_run("Wymusza HTTPS, chroni przed atakami man-in-the-middle")
+            p.add_run("Erzwingt HTTPS, schützt vor Man-in-the-Middle-Angriffen")
             p = doc.add_paragraph()
             run = p.add_run("• CSP: ")
             run.bold = True
-            p.add_run("Zapobiega atakom XSS (wstrzykiwanie złośliwego kodu)")
+            p.add_run("Verhindert XSS-Angriffe (Einschleusen von bösartigem Code)")
             p = doc.add_paragraph()
             run = p.add_run("• X-Frame-Options: ")
             run.bold = True
-            p.add_run("Chroni przed clickjacking (osadzenie strony w iframe)")
+            p.add_run("Schützt vor Clickjacking (Einbettung der Seite in iframe)")
             doc.add_paragraph()
 
     if issues['no_viewport'] or issues['no_og_tags'] or issues['no_twitter_cards'] or issues['missing_schema']:
@@ -915,12 +915,12 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             total = summary['pages_analyzed']
             count = len(issues['no_viewport'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"Brak meta viewport: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"Fehlendes Meta Viewport: {count}/{total} Seiten ({pct}%)")
             run.bold = True
-            doc.add_paragraph("Od 2018 Google stosuje mobile-first indexing. Brak meta viewport oznacza, że:")
-            doc.add_paragraph("• Strona nie skaluje się poprawnie na smartfonach", style='List Bullet')
-            doc.add_paragraph("• Google może obniżyć ranking (mobile-first!)", style='List Bullet')
-            doc.add_paragraph("• Użytkownicy mobile widzą 'desktopową' wersję (zła UX)", style='List Bullet')
+            doc.add_paragraph("Seit 2018 verwendet Google Mobile-First-Indexing. Fehlendes Meta Viewport bedeutet:")
+            doc.add_paragraph("• Seite skaliert nicht korrekt auf Smartphones", style='List Bullet')
+            doc.add_paragraph("• Google kann Ranking senken (Mobile-First!)", style='List Bullet')
+            doc.add_paragraph("• Mobile Nutzer sehen 'Desktop'-Version (schlechte UX)", style='List Bullet')
             doc.add_paragraph()
 
         if issues['no_og_tags']:
@@ -928,10 +928,10 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             total = summary['pages_analyzed']
             count = len(issues['no_og_tags'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"Braki w Open Graph: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"Fehlende Open Graph Tags: {count}/{total} Seiten ({pct}%)")
             run.bold = True
             doc.add_paragraph(
-                "Open Graph to meta tagi używane przez Facebook, LinkedIn, WhatsApp do generowania podglądu linków."
+                "Open Graph sind Meta-Tags, die von Facebook, LinkedIn, WhatsApp zur Generierung von Link-Vorschauen verwendet werden."
             )
             doc.add_paragraph()
 
@@ -940,9 +940,9 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             total = summary['pages_analyzed']
             count = len(issues['no_twitter_cards'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"Brak Twitter Cards: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"Fehlende Twitter Cards: {count}/{total} Seiten ({pct}%)")
             run.bold = True
-            doc.add_paragraph("Twitter Cards to odpowiednik OG dla platformy X (dawniej Twitter).")
+            doc.add_paragraph("Twitter Cards sind das OG-Äquivalent für die Plattform X (ehemals Twitter).")
             doc.add_paragraph()
 
         if issues['missing_schema']:
@@ -950,28 +950,28 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             total = summary['pages_analyzed']
             count = len(issues['missing_schema'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"Brak Schema.org: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"Fehlendes Schema.org: {count}/{total} Seiten ({pct}%)")
             run.bold = True
             doc.add_paragraph(
-                "Schema.org (JSON-LD) to 'język', którym mówisz do Google o zawartości strony. Bez niego:"
+                "Schema.org (JSON-LD) ist die 'Sprache', mit der Sie Google über den Inhalt Ihrer Seite informieren. Ohne sie:"
             )
-            doc.add_paragraph("• Tracisz rich snippets (gwiazdki, FAQ, breadcrumbs)", style='List Bullet')
-            doc.add_paragraph("• Trudniej o featured snippet (pozycja 0)", style='List Bullet')
-            doc.add_paragraph("• Google słabiej rozumie kontekst treści", style='List Bullet')
+            doc.add_paragraph("• Verlieren Sie Rich Snippets (Sterne, FAQ, Breadcrumbs)", style='List Bullet')
+            doc.add_paragraph("• Schwieriger, Featured Snippet (Position 0) zu erreichen", style='List Bullet')
+            doc.add_paragraph("• Google versteht Inhaltskontext schlechter", style='List Bullet')
             doc.add_paragraph()
 
     if issues['weak_eeat'] or issues['thin_content']:
-        add_section_heading(doc, 'E-E-A-T & Treść', 2, icon='🟡')
+        add_section_heading(doc, 'E-E-A-T & Inhalt', 2, icon='🟡')
 
         if issues['weak_eeat']:
             p = doc.add_paragraph()
             total = summary['pages_analyzed']
             count = len(issues['weak_eeat'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"Słabe E-E-A-T: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"Schwaches E-E-A-T: {count}/{total} Seiten ({pct}%)")
             run.bold = True
             doc.add_paragraph(
-                "E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) to zestaw sygnałów jakości dla Google."
+                "E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) ist ein Satz von Qualitätssignalen für Google."
             )
             doc.add_paragraph()
 
@@ -980,10 +980,10 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             total = summary['pages_analyzed']
             count = len(issues['thin_content'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"Thin content: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"Dünner Inhalt: {count}/{total} Seiten ({pct}%)")
             run.bold = True
             doc.add_paragraph(
-                "Strony z mniej niż 300 słowami mogą być uznane przez Google za 'cienkie' (low-quality)."
+                "Seiten mit weniger als 300 Wörtern können von Google als 'dünn' (Low-Quality) eingestuft werden."
             )
             doc.add_paragraph()
 
@@ -992,37 +992,37 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     # =========================
     # 5. MOBILNOŚĆ
     # =========================
-    add_section_heading(doc, '5. Mobilność i Responsywność', 1, icon='📱')
+    add_section_heading(doc, '5. Mobilität und Responsive Design', 1, icon='📱')
     p = doc.add_paragraph()
-    run = p.add_run('Status mobilności: ')
+    run = p.add_run('Mobilitätsstatus: ')
     run.bold = True
     if summary['mobile_percentage'] >= 90:
-        run = p.add_run(f"✅ {summary['mobile_percentage']}% stron mobile-friendly")
+        run = p.add_run(f"✅ {summary['mobile_percentage']}% der Seiten sind mobile-friendly")
         run.font.color.rgb = RGBColor(0, 150, 0)
     elif summary['mobile_percentage'] >= 70:
-        run = p.add_run(f"⚠️ {summary['mobile_percentage']}% stron mobile-friendly")
+        run = p.add_run(f"⚠️ {summary['mobile_percentage']}% der Seiten sind mobile-friendly")
         run.font.color.rgb = RGBColor(200, 100, 0)
     else:
-        run = p.add_run(f"🔴 {summary['mobile_percentage']}% stron mobile-friendly")
+        run = p.add_run(f"🔴 {summary['mobile_percentage']}% der Seiten sind mobile-friendly")
         run.font.color.rgb = RGBColor(200, 0, 0)
 
     doc.add_paragraph()
     doc.add_paragraph(
-        "Google analizuje najpierw wersję mobilną strony (mobile-first indexing). Brak responsywności oznacza:"
+        "Google analysiert zuerst die mobile Version der Seite (Mobile-First-Indexing). Fehlende Responsiveness bedeutet:"
     )
-    doc.add_paragraph("• Spadek pozycji w wynikach mobilnych (60%+ ruchu to mobile)", style='List Bullet')
-    doc.add_paragraph("• Gorsze doświadczenie użytkownika = wyższy bounce rate", style='List Bullet')
-    doc.add_paragraph("• Utratę potencjalnych klientów mobilnych", style='List Bullet')
+    doc.add_paragraph("• Rangabfall in mobilen Ergebnissen (60%+ des Traffics ist mobil)", style='List Bullet')
+    doc.add_paragraph("• Schlechtere Nutzererfahrung = höhere Bounce Rate", style='List Bullet')
+    doc.add_paragraph("• Verlust potenzieller mobiler Kunden", style='List Bullet')
 
     if issues['no_viewport']:
         doc.add_paragraph()
         p = doc.add_paragraph()
-        run = p.add_run(f"Strony bez meta viewport ({len(issues['no_viewport'])}):")
+        run = p.add_run(f"Seiten ohne Meta Viewport ({len(issues['no_viewport'])}):")
         run.bold = True
         doc.add_paragraph(
-            "⚠️ UWAGA: Sam brak meta viewport nie gwarantuje, że strona wyświetla się niepoprawnie na urządzeniach mobilnych. "
-            "Jest to jedynie wskaźnik techniczny. Zalecamy ręczną weryfikację wyświetlania na rzeczywistych urządzeniach mobilnych "
-            "lub przy użyciu narzędzi takich jak Google PageSpeed Insights, Lighthouse czy Chrome DevTools."
+            "⚠️ HINWEIS: Das Fehlen von Meta Viewport garantiert nicht, dass die Seite auf Mobilgeräten falsch angezeigt wird. "
+            "Dies ist nur ein technischer Indikator. Wir empfehlen eine manuelle Überprüfung der Darstellung auf echten Mobilgeräten "
+            "oder mit Tools wie Google PageSpeed Insights, Lighthouse oder Chrome DevTools."
         )
         doc.add_paragraph()
 
@@ -1040,24 +1040,24 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
 
         if filtered_urls:
             p = doc.add_paragraph()
-            run = p.add_run("Strony HTML wymagające poprawy:")
+            run = p.add_run("HTML-Seiten die Verbesserung benötigen:")
             run.bold = True
             run.font.size = Pt(11)
             for url in filtered_urls[:15]:
                 doc.add_paragraph(f"• {url}", style='List Bullet')
             if len(filtered_urls) > 15:
-                doc.add_paragraph(f"...oraz {len(filtered_urls) - 15} innych stron")
+                doc.add_paragraph(f"...sowie {len(filtered_urls) - 15} weitere Seiten")
 
         # Jeśli są pliki multimedialne, informujemy o nich osobno
         multimedia_count = len(issues['no_viewport']) - len(filtered_urls)
         if multimedia_count > 0:
             doc.add_paragraph()
             p = doc.add_paragraph()
-            run = p.add_run(f"ℹ️  Dodatkowo znaleziono {multimedia_count} plików multimedialnych bez viewport ")
+            run = p.add_run(f"ℹ️  Zusätzlich {multimedia_count} Multimediadateien ohne Viewport gefunden ")
             run.font.size = Pt(9)
             run.italic = True
             run.font.color.rgb = RGBColor(100, 100, 100)
-            run2 = p.add_run("(pliki video/obrazy – to normalne, nie wymaga poprawy)")
+            run2 = p.add_run("(Video/Bilddateien – normal, keine Verbesserung nötig)")
             run2.font.size = Pt(9)
             run2.italic = True
             run2.font.color.rgb = RGBColor(100, 100, 100)
@@ -1065,7 +1065,7 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
         if SHOW_REMEDIATIONS:
             doc.add_paragraph()
             p = doc.add_paragraph()
-            run = p.add_run('Jak dodać meta viewport:\n')
+            run = p.add_run('So fügen Sie Meta Viewport hinzu:\n')
             run.bold = True
             code = '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
             q = doc.add_paragraph()
