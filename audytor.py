@@ -80,6 +80,41 @@ EXCLUDED_PATTERNS = [
 
 SHOW_REMEDIATIONS = False
 
+# ===== STRONY SYSTEMOWE (nie wymagają pełnej analizy SEO) =====
+# Te strony nie powinny być oceniane pod kątem E-E-A-T, NAP, Meta Description itp.
+SYSTEM_PAGE_PATTERNS = [
+    r'/konto[_-]?uzytkownika',
+    r'/mein[_-]?konto',
+    r'/my[_-]?account',
+    r'/account',
+    r'/cart',
+    r'/koszyk',
+    r'/warenkorb',
+    r'/checkout',
+    r'/zamowienie',
+    r'/bestellung',
+    r'/login',
+    r'/logowanie',
+    r'/anmelden',
+    r'/register',
+    r'/rejestracja',
+    r'/registrieren',
+    r'/wholesale[_-]?login',
+    r'/wp-admin',
+    r'/wp-login',
+    r'/wp-content/uploads/.*\.(pdf|doc|docx|xls|xlsx)$',
+    r'/feed/?$',
+    r'/rss/?$',
+    r'/search',
+    r'/suche',
+    r'/szukaj',
+    r'/404',
+]
+
+# ===== JĘZYK RAPORTU =====
+# Dostępne: "pl" (polski), "de" (niemiecki), "en" (angielski)
+REPORT_LANGUAGE = "pl"
+
 
 def same_site(u1: str, u2: str) -> bool:
     a = urllib.parse.urlparse(u1)
@@ -112,6 +147,97 @@ def is_excluded_url(url: str) -> bool:
     return False
 
 
+def get_canonical_url(url: str) -> str:
+    """
+    Usuwa fragment (#anchor) i parametry zapytania (?query) z URL.
+    Zwraca kanoniczny URL bez duplikatów.
+    """
+    parsed = urllib.parse.urlparse(url)
+    # Usuwamy fragment i query string
+    canonical = urllib.parse.urlunparse((
+        parsed.scheme,
+        parsed.netloc,
+        parsed.path,
+        '',  # params
+        '',  # query - usunięte
+        ''   # fragment - usunięte
+    ))
+    return url_normalize(canonical)
+
+
+def is_system_page(url: str) -> bool:
+    """
+    Sprawdza, czy URL jest stroną systemową (koszyk, logowanie, konto itp.).
+    Strony systemowe nie powinny być oceniane pod kątem E-E-A-T, NAP, Meta Description.
+    """
+    parsed = urllib.parse.urlparse(url)
+    path = parsed.path.lower()
+
+    for pattern in SYSTEM_PAGE_PATTERNS:
+        if re.search(pattern, path) or re.search(pattern, url.lower()):
+            return True
+    return False
+
+
+def is_decorative_image(img_tag) -> bool:
+    """
+    Sprawdza, czy obrazek jest dekoracyjny i nie wymaga atrybutu alt.
+    Dekoracyjne obrazki to: SVG, ikony, tracking pixels, spacery itp.
+    """
+    # Sprawdzenie role="presentation" lub aria-hidden="true"
+    if img_tag.get('role') == 'presentation':
+        return True
+    if img_tag.get('aria-hidden') == 'true':
+        return True
+
+    src = img_tag.get('src', '') or ''
+    src_lower = src.lower()
+
+    # SVG inline lub jako plik
+    if src_lower.endswith('.svg') or src_lower.startswith('data:image/svg'):
+        return True
+
+    # Tracking pixels i spacery (1x1)
+    width = img_tag.get('width', '')
+    height = img_tag.get('height', '')
+    if width == '1' and height == '1':
+        return True
+    if width == '0' or height == '0':
+        return True
+
+    # Obrazki z rozmiarem < 10px
+    try:
+        w = int(width) if width else 100
+        h = int(height) if height else 100
+        if w < 10 or h < 10:
+            return True
+    except (ValueError, TypeError):
+        pass
+
+    # Obrazki z typowymi klasami dekoracyjnymi
+    classes = img_tag.get('class', [])
+    if isinstance(classes, str):
+        classes = classes.split()
+    decorative_classes = ['icon', 'logo', 'sprite', 'spacer', 'pixel', 'tracking', 'decoration', 'bullet']
+    if any(dc in ' '.join(classes).lower() for dc in decorative_classes):
+        return True
+
+    # Base64 data URIs małych obrazków (zazwyczaj ikony)
+    if src_lower.startswith('data:image/') and len(src) < 500:
+        return True
+
+    # Typowe nazwy plików dekoracyjnych
+    decorative_patterns = [
+        r'spacer', r'pixel', r'blank', r'transparent', r'clear\.gif',
+        r'tracking', r'beacon', r'1x1', r'icon[-_]', r'bullet[-_]'
+    ]
+    for pattern in decorative_patterns:
+        if re.search(pattern, src_lower):
+            return True
+
+    return False
+
+
 def calculate_meta_score(title: str, description: str) -> Dict[str, Any]:
     title_len = len(title)
     desc_len = len(description)
@@ -136,38 +262,160 @@ def calculate_meta_score(title: str, description: str) -> Dict[str, Any]:
 
 
 def extract_nap_signals(soup: BeautifulSoup, text: str) -> Dict[str, Any]:
+    """
+    Wydobywa i analizuje sygnały NAP (Name, Address, Phone) dla Local SEO.
+    Sprawdza zarówno tekst strony, footer, jak i dane strukturalne Schema.org.
+
+    WAŻNE: NAP jest oceniany na poziomie CAŁEJ STRONY, nie tylko głównej treści.
+    Footer zawiera zwykle dane kontaktowe wspólne dla całej witryny.
+    """
+    # Wzorce numerów telefonów (rozszerzone o formaty niemieckie, polskie i międzynarodowe)
     phone_patterns = [
-        r'\+?48\s?[\d\s\-]{9,}',
-        r'\(\d{3}\)\s?\d{3}[\s\-]?\d{4}',
-        r'\d{3}[\s\-]?\d{3}[\s\-]?\d{4}',
+        r'\+?48\s?[\d\s\-]{9,}',           # Polski format
+        r'\+?49\s?[\d\s\-/]{9,}',          # Niemiecki format
+        r'\+?\d{1,3}\s?[\d\s\-/]{8,}',     # Międzynarodowy format
+        r'\(\d{3,5}\)\s?[\d\s\-/]{5,}',    # Format z kodem obszaru w nawiasach
+        r'\d{3,5}[\s\-/]?\d{3,5}[\s\-/]?\d{2,5}',  # Ogólny format
+        r'tel[:\s]*[\d\s\-\+/\(\)]+',       # Format z prefiksem "tel:"
+        r'telefon[:\s]*[\d\s\-\+/\(\)]+',   # Format z prefiksem "telefon:"
+        r'phone[:\s]*[\d\s\-\+/\(\)]+',     # Format z prefiksem "phone:"
     ]
+
+    # Sprawdzenie footer'a NAJPIERW (bo tam zwykle są dane kontaktowe)
+    footer = soup.find('footer')
+    footer_text = footer.get_text() if footer else ""
+
+    # Sprawdzenie header'a (czasem logo z nazwą firmy)
+    header = soup.find('header')
+    header_text = header.get_text() if header else ""
+
+    # Sprawdzenie sekcji kontaktowych
+    contact_sections = soup.find_all(
+        ['div', 'section', 'aside', 'address'],
+        class_=lambda x: x and any(c in str(x).lower() for c in ['contact', 'kontakt', 'footer', 'address', 'info', 'company'])
+    )
+    contact_text = " ".join(s.get_text() for s in contact_sections)
+
+    # Sprawdzenie elementów z id sugerującym kontakt
+    contact_ids = soup.find_all(id=re.compile(r'contact|kontakt|footer|address', re.I))
+    contact_id_text = " ".join(s.get_text() for s in contact_ids)
+
+    # Łączymy WSZYSTKIE źródła tekstu
+    combined_text = f"{text} {footer_text} {header_text} {contact_text} {contact_id_text}".lower()
+
+    # Szukamy telefonów we wszystkich źródłach
     phones = []
     for pattern in phone_patterns:
-        phones.extend(re.findall(pattern, text))
-    address_indicators = ['ul.', 'ulica', 'al.', 'aleja', 'street', 'avenue', 'road']
-    has_address_indicators = any(ind in text.lower() for ind in address_indicators)
+        phones.extend(re.findall(pattern, combined_text, re.I))
+
+    # Rozszerzone wskaźniki adresu (niemieckie, polskie, angielskie)
+    address_indicators = [
+        'ul.', 'ulica', 'al.', 'aleja',  # polskie
+        'str.', 'straße', 'strasse', 'weg', 'platz', 'allee',  # niemieckie
+        'street', 'avenue', 'road', 'lane', 'drive', 'blvd',  # angielskie
+    ]
+    has_address_indicators = any(ind in combined_text for ind in address_indicators)
+
+    # Sprawdzenie kodów pocztowych
+    postal_codes = re.findall(r'\d{2}-\d{3}', combined_text)  # Polski format
+    postal_codes += re.findall(r'\b\d{5}\b', combined_text)    # Niemiecki format
+    if postal_codes:
+        has_address_indicators = True
+
+    # Sprawdzenie email w stopce/kontakcie
+    email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+    has_email = bool(re.search(email_pattern, combined_text))
+
+    # Sprawdzenie nazwy firmy (Business Name)
+    business_name_indicators = [
+        'gmbh', 'sp. z o.o.', 'sp.z.o.o', 's.a.', 'ag', 'e.k.', 'ohg', 'kg',
+        'ltd', 'inc', 'corp', 'llc', 'co.', 'company',
+        '©',  # Symbol copyright często przy nazwie firmy
+    ]
+    has_business_name = any(ind in combined_text for ind in business_name_indicators)
+
+    # Sprawdzenie Schema.org dla Organization/LocalBusiness
     schema_scripts = soup.find_all('script', type='application/ld+json')
+    has_org_schema = False
     has_local_schema = False
+    schema_has_phone = False
+    schema_has_address = False
+    schema_has_email = False
+
     for script in schema_scripts:
         try:
-            data = json.loads(script.string)
-            if isinstance(data, dict):
-                schema_type = data.get('@type', '')
-                if isinstance(schema_type, str):
-                    if any(t in schema_type for t in ['LocalBusiness', 'Organization', 'Store', 'Restaurant']):
-                        has_local_schema = True
-                        break
-        except:
+            script_text = script.string
+            if not script_text:
+                continue
+
+            data = json.loads(script_text)
+
+            # Obsługa @graph (wiele schematów w jednym skrypcie)
+            items = [data]
+            if isinstance(data, dict) and '@graph' in data:
+                items = data.get('@graph', [])
+            elif isinstance(data, list):
+                items = data
+
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+
+                schema_type = item.get('@type', '')
+                if isinstance(schema_type, list):
+                    schema_type = ' '.join(schema_type)
+
+                # Sprawdzenie typu schematu
+                if any(t in str(schema_type) for t in ['LocalBusiness', 'Store', 'Restaurant', 'Hotel', 'Dentist', 'LegalService']):
+                    has_local_schema = True
+                if any(t in str(schema_type) for t in ['Organization', 'Corporation', 'Company']):
+                    has_org_schema = True
+
+                # Sprawdzenie danych kontaktowych w schemacie
+                if item.get('telephone') or item.get('phone'):
+                    schema_has_phone = True
+                if item.get('address') or item.get('location'):
+                    schema_has_address = True
+                if item.get('email'):
+                    schema_has_email = True
+
+        except (json.JSONDecodeError, TypeError, AttributeError):
             pass
+
+    # Rozszerzone obliczenie NAP score
+    has_phone_final = len(phones) > 0 or schema_has_phone
+    has_address_final = has_address_indicators or schema_has_address
+    has_email_final = has_email or schema_has_email
+    has_schema_final = has_local_schema or has_org_schema
+
+    nap_details_score = sum([
+        has_phone_final,                             # Telefon (1 punkt)
+        has_address_final,                           # Adres (1 punkt)
+        has_email_final,                             # Email (1 punkt)
+        has_schema_final,                            # Schema biznesowy (1 punkt)
+        bool(footer_text.strip()),                   # Ma footer z treścią (1 punkt)
+        has_business_name,                           # Nazwa firmy (1 punkt)
+    ])
+
+    # Normalizujemy do skali 0-3 dla kompatybilności wstecznej
+    if nap_details_score >= 4:
+        normalized_score = 3
+    elif nap_details_score >= 2:
+        normalized_score = 2
+    else:
+        normalized_score = nap_details_score
+
     return {
         "phone_numbers_found": len(phones),
-        "has_address_indicators": has_address_indicators,
+        "has_phone": has_phone_final,
+        "has_address_indicators": has_address_final,
+        "has_email": has_email_final,
+        "has_business_name": has_business_name,
         "has_local_business_schema": has_local_schema,
-        "nap_score": sum([
-            len(phones) > 0,
-            has_address_indicators,
-            has_local_schema
-        ]),
+        "has_organization_schema": has_org_schema,
+        "has_footer_content": bool(footer_text.strip()),
+        "nap_score": normalized_score,
+        "nap_details_score": nap_details_score,
     }
 
 
@@ -282,6 +530,29 @@ def analyze_security_headers(headers: Dict[str, str], url: str, html: str = "") 
         check["name"] for check in security_checks.values()
         if not check["present"] and check["severity"] in ["high", "medium"]
     ]
+
+    # Określenie rzeczywistego ryzyka (nie tylko brakujące nagłówki)
+    # WAŻNE: Brakujące nagłówki to "hardening" - nie oznaczają aktywnej podatności
+    has_critical_issues = not has_ssl or has_mixed_content  # To są faktyczne problemy
+    has_hardening_issues = len(missing_critical) > 0  # To jest brak "hardening"
+
+    # Generowanie spójnego opisu bezpieczeństwa
+    if has_critical_issues:
+        if not has_ssl:
+            security_description = "Brak HTTPS - dane nie są szyfrowane"
+        else:
+            security_description = "Mixed content - niektóre zasoby ładowane przez HTTP"
+        security_risk = "high"
+    elif security_percentage < 50:
+        security_description = "Brak zalecanych nagłówków bezpieczeństwa (hardening)"
+        security_risk = "medium"
+    elif security_percentage < 70:
+        security_description = "Częściowy hardening - brakuje niektórych nagłówków"
+        security_risk = "low"
+    else:
+        security_description = "Dobre zabezpieczenia"
+        security_risk = "none"
+
     return {
         "security_checks": security_checks,
         "has_ssl": has_ssl,
@@ -299,6 +570,11 @@ def analyze_security_headers(headers: Dict[str, str], url: str, html: str = "") 
         "missing_critical": missing_critical,
         "headers_count": len([c for c in security_checks.values() if c["present"]]),
         "total_headers": len(security_checks),
+        # Nowe pola dla spójnego raportowania
+        "has_critical_issues": has_critical_issues,
+        "has_hardening_issues": has_hardening_issues,
+        "security_description": security_description,
+        "security_risk": security_risk,  # "high", "medium", "low", "none"
     }
 
 
@@ -400,8 +676,13 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
     h2 = [h.get_text(strip=True) for h in soup.find_all("h2")]
     h3 = [h.get_text(strip=True) for h in soup.find_all("h3")]
     imgs = soup.find_all("img")
-    img_without_alt = sum(1 for i in imgs if not i.get("alt"))
-    img_total = len(imgs)
+    # Filtrujemy obrazki dekoracyjne (SVG, ikony, tracking pixels)
+    content_imgs = [i for i in imgs if not is_decorative_image(i)]
+    img_without_alt = sum(1 for i in content_imgs if not i.get("alt"))
+    img_total = len(content_imgs)
+    # Zachowujemy też oryginalne wartości dla celów diagnostycznych
+    img_total_raw = len(imgs)
+    img_decorative = len(imgs) - len(content_imgs)
     a_tags = soup.find_all("a", href=True)
     links = [absolutize(url, a["href"]) for a in a_tags if not a["href"].startswith("javascript:")]
     og_data = {}
@@ -451,6 +732,19 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
         "sufficient_text": text_len >= 1200,
         "has_navigation_schema": any('navigation' in str(s).lower() for s in soup.find_all(['nav'])),
     }
+    # Zbieramy typy schematów z microdata
+    microdata_types = []
+    for node in structured.get("microdata", []):
+        t = node.get("@type")
+        if isinstance(t, list):
+            microdata_types += t
+        elif t:
+            microdata_types.append(t)
+    microdata_types = list(dict.fromkeys(microdata_types))
+
+    # Łączymy wszystkie typy schematów
+    all_schema_types = list(dict.fromkeys(jsonld_types + microdata_types))
+
     return {
         "title": title,
         "meta_description": desc,
@@ -465,6 +759,8 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
         "img_total": img_total,
         "img_without_alt": img_without_alt,
         "img_alt_ratio": round((img_total - img_without_alt) / max(1, img_total) * 100, 1),
+        "img_total_raw": img_total_raw,
+        "img_decorative": img_decorative,
         "has_viewport": has_viewport,
         "viewport_content": viewport_content,
         "is_mobile_friendly": has_viewport and 'width=device-width' in viewport_content.lower(),
@@ -475,7 +771,9 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
         "has_og_description": "og:description" in og_data,
         "has_twitter_card": "twitter:card" in twitter_data,
         "jsonld_types": jsonld_types,
-        "schema_count": len(jsonld_types),
+        "microdata_types": microdata_types,
+        "all_schema_types": all_schema_types,
+        "schema_count": len(all_schema_types),
         "text_len": text_len,
         "word_count": len(text.split()),
         "links": links,
@@ -565,8 +863,10 @@ async def fetch_and_parse_sitemaps(session: aiohttp.ClientSession, sitemap_urls:
 
 
 async def crawl(start_url: str) -> Dict[str, Any]:
-    q = deque([(start_url, 0)])
-    seen: Set[str] = {start_url}
+    # Kanonizujemy URL startowy
+    canonical_start = get_canonical_url(start_url)
+    q = deque([(canonical_start, 0)])
+    seen: Set[str] = {canonical_start}
     results: Dict[str, Any] = {}
     pbar = tqdm(total=MAX_PAGES, desc="Crawling", unit="page") if HAS_TQDM else None
     async with aiohttp.ClientSession() as session:
@@ -577,9 +877,11 @@ async def crawl(start_url: str) -> Dict[str, Any]:
             if sitemaps:
                 urls_from_sm = await fetch_and_parse_sitemaps(session, sitemaps)
                 for u in urls_from_sm[:max(0, MAX_PAGES - len(q))]:
-                    if u not in seen and same_site(start_url, u) and not is_excluded_url(u):
-                        seen.add(u)
-                        q.append((u, 1))
+                    # Kanonizujemy URL przed dodaniem
+                    canonical_u = get_canonical_url(u)
+                    if canonical_u not in seen and same_site(start_url, canonical_u) and not is_excluded_url(canonical_u):
+                        seen.add(canonical_u)
+                        q.append((canonical_u, 1))
         except Exception as e:
             print(f"⚠️  Błąd przy pobieraniu sitemap: {e}")
 
@@ -602,6 +904,8 @@ async def crawl(start_url: str) -> Dict[str, Any]:
                     if ct and "text/html" in ct:
                         parsed = parse_page(html, final)
                         item.update(parsed)
+                        # Dodajemy flagę is_system_page
+                        item["is_system_page"] = is_system_page(final)
                         security_analysis = analyze_security_headers(headers, final, html)
                         item["security"] = security_analysis
                         if USE_PAGESPEED and len(results) < 5:
@@ -611,9 +915,11 @@ async def crawl(start_url: str) -> Dict[str, Any]:
                                 continue
                             if is_excluded_url(link):
                                 continue
-                            if link not in seen and depth + 1 <= MAX_DEPTH:
-                                seen.add(link)
-                                q.append((link, depth + 1))
+                            # Kanonizujemy link przed dodaniem do kolejki
+                            canonical_link = get_canonical_url(link)
+                            if canonical_link not in seen and depth + 1 <= MAX_DEPTH:
+                                seen.add(canonical_link)
+                                q.append((canonical_link, depth + 1))
                     else:
                         item["note"] = "Pominięto (non-HTML)"
                     results[url] = item
@@ -678,6 +984,23 @@ def analyze_issues(all_pages: Dict[str, Any]) -> Dict[str, Any]:
                 issues['critical_errors'].append({'url': url, 'status': status, 'error': data.get('error', '')})
         if not status or status >= 400:
             continue
+
+        # Sprawdzamy czy strona jest systemowa lub noindex
+        is_system = data.get('is_system_page', False)
+        robots_meta = data.get('robots_meta', '')
+        is_noindex = 'noindex' in robots_meta
+
+        # Pomijamy strony systemowe i noindex dla analizy treści
+        # (ale nie dla analizy technicznej jak SSL, headers itp.)
+        if is_system or is_noindex:
+            # Dla stron systemowych/noindex sprawdzamy tylko podstawowe rzeczy
+            security = data.get('security', {})
+            if not security.get('has_ssl'):
+                issues['no_ssl'].append(url)
+            if security.get('has_mixed_content'):
+                issues['mixed_content'].append(url)
+            continue  # Pomijamy resztę analizy treści
+
         if not data.get('title'):
             issues['missing_title'].append(url)
         else:
@@ -807,15 +1130,26 @@ def calculate_overall_score(summary: Dict[str, Any]) -> Tuple[int, str]:
 def calculate_summary(all_pages: Dict[str, Any], issues: Dict[str, Any], duplicates: Dict) -> Dict[str, Any]:
     analyzed_pages = {url: data for url, data in all_pages.items() if not data.get('is_excluded')}
     excluded_count = len(all_pages) - len(analyzed_pages)
+
+    # Rozdzielamy strony na content, systemowe i noindex
+    pages_system = sum(1 for p in analyzed_pages.values() if p.get('is_system_page', False))
+    pages_noindex = sum(1 for p in analyzed_pages.values()
+                        if 'noindex' in p.get('robots_meta', '') and not p.get('is_system_page', False))
+    pages_content = len(analyzed_pages) - pages_system - pages_noindex
+
     pages_with_errors = len(issues['critical_errors'])
     pages_ok = len([p for p in analyzed_pages.values() if p.get('status') == 200])
     mobile_friendly = sum(1 for p in analyzed_pages.values() if p.get('is_mobile_friendly'))
     mobile_percentage = round(mobile_friendly / max(1, len(analyzed_pages)) * 100, 1)
     pages_with_schema = sum(1 for p in analyzed_pages.values() if p.get('schema_count', 0) > 0)
     avg_schema_types = sum(p.get('schema_count', 0) for p in analyzed_pages.values()) / max(1, len(analyzed_pages))
-    avg_eeat = sum(p.get('eeat_signals', {}).get('eeat_percentage', 0) for p in analyzed_pages.values()) / max(1,
-                                                                                                               len(analyzed_pages))
-    local_optimized = sum(1 for p in analyzed_pages.values() if p.get('nap_signals', {}).get('nap_score', 0) >= 2)
+
+    # E-E-A-T i NAP liczymy tylko dla stron contentowych (nie systemowych, nie noindex)
+    content_pages = [p for p in analyzed_pages.values()
+                     if not p.get('is_system_page', False) and 'noindex' not in p.get('robots_meta', '')]
+    avg_eeat = sum(p.get('eeat_signals', {}).get('eeat_percentage', 0) for p in content_pages) / max(1, len(content_pages))
+    local_optimized = sum(1 for p in content_pages if p.get('nap_signals', {}).get('nap_score', 0) >= 2)
+
     avg_security = sum(p.get('security', {}).get('security_percentage', 0) for p in analyzed_pages.values()) / max(1,
                                                                                                                    len(analyzed_pages))
     pages_with_ssl = sum(1 for p in analyzed_pages.values() if p.get('security', {}).get('has_ssl'))
@@ -825,6 +1159,9 @@ def calculate_summary(all_pages: Dict[str, Any], issues: Dict[str, Any], duplica
         "pages_crawled": len(all_pages),
         "pages_analyzed": len(analyzed_pages),
         "pages_excluded": excluded_count,
+        "pages_content": pages_content,
+        "pages_system": pages_system,
+        "pages_noindex": pages_noindex,
         "pages_ok": pages_ok,
         "pages_with_errors": pages_with_errors,
         "missing_title": len(issues['missing_title']),
