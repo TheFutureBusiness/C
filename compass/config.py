@@ -57,5 +57,40 @@ EXCLUDED_PATTERNS = [
     r'/cdn-cgi/l/email-protection',
 ]
 
+# ===== STRONY SYSTEMOWE (nie wymagają pełnej analizy SEO) =====
+# Te strony nie powinny być oceniane pod kątem E-E-A-T, NAP, Meta Description itp.
+SYSTEM_PAGE_PATTERNS = [
+    r'/konto[_-]?uzytkownika',
+    r'/mein[_-]?konto',
+    r'/my[_-]?account',
+    r'/account',
+    r'/cart',
+    r'/koszyk',
+    r'/warenkorb',
+    r'/checkout',
+    r'/zamowienie',
+    r'/bestellung',
+    r'/login',
+    r'/logowanie',
+    r'/anmelden',
+    r'/register',
+    r'/rejestracja',
+    r'/registrieren',
+    r'/wholesale[_-]?login',
+    r'/wp-admin',
+    r'/wp-login',
+    r'/wp-content/uploads/.*\.(pdf|doc|docx|xls|xlsx)$',
+    r'/feed/?$',
+    r'/rss/?$',
+    r'/search',
+    r'/suche',
+    r'/szukaj',
+    r'/404',
+]
+
 # ===== OPCJE RAPORTOWANIA =====
 SHOW_REMEDIATIONS = False
+
+# ===== JĘZYK RAPORTU =====
+# Dostępne: "pl" (polski), "de" (niemiecki), "en" (angielski)
+REPORT_LANGUAGE = "pl"

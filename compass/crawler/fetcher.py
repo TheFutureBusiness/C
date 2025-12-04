@@ -9,13 +9,58 @@ import extruct
 from w3lib.html import get_base_url
 
 from compass.config import TIMEOUT, USER_AGENT
-from compass.utils import clean_text, absolutize, same_site, is_excluded_url
+from compass.utils import clean_text, absolutize, same_site, is_excluded_url, is_system_page
 from compass.analyzers import (
     calculate_meta_score,
     extract_nap_signals,
     analyze_eeat_signals,
     analyze_security_headers,
 )
+
+
+def is_decorative_image(img_tag) -> bool:
+    """
+    Sprawdza czy obraz jest dekoracyjny/techniczny i nie wymaga alt.
+
+    Obrazy dekoracyjne:
+    - SVG inline (ikony)
+    - Obrazy 1x1 (tracking pixels)
+    - Obrazy z role="presentation" lub aria-hidden="true"
+    - Placeholder/lazy-load obrazy
+    - Obrazy z klas sugerujących ikony (icon, logo-small, sprite)
+    """
+    # Sprawdź atrybuty ARIA
+    if img_tag.get('role') == 'presentation':
+        return True
+    if img_tag.get('aria-hidden') == 'true':
+        return True
+
+    # Sprawdź rozmiar (tracking pixels)
+    width = img_tag.get('width', '')
+    height = img_tag.get('height', '')
+    if width in ('1', '0') or height in ('1', '0'):
+        return True
+
+    # Sprawdź src - data URI dla małych obrazów, svg
+    src = img_tag.get('src', '').lower()
+    if src.startswith('data:image/svg') or src.endswith('.svg'):
+        return True
+    if 'data:image/gif;base64,R0lGOD' in src:  # 1x1 GIF
+        return True
+    if 'pixel' in src or 'spacer' in src or 'blank' in src:
+        return True
+
+    # Sprawdź klasy sugerujące ikony/dekoracje
+    classes = ' '.join(img_tag.get('class', [])).lower() if img_tag.get('class') else ''
+    decorative_classes = ['icon', 'sprite', 'logo-small', 'emoji', 'decorative', 'lazy-placeholder']
+    if any(dc in classes for dc in decorative_classes):
+        return True
+
+    # Sprawdź lazy-loading placeholders
+    if img_tag.get('data-src') and not src:
+        return True  # Placeholder bez rzeczywistego src
+
+    return False
 
 
 async def fetch(session: aiohttp.ClientSession, url: str) -> Tuple[Optional[int], str, str, str, Dict[str, str]]:
@@ -85,10 +130,15 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
     h2 = [h.get_text(strip=True) for h in soup.find_all("h2")]
     h3 = [h.get_text(strip=True) for h in soup.find_all("h3")]
 
-    # Obrazy i ALT
+    # Obrazy i ALT - filtrujemy obrazy dekoracyjne/techniczne
     imgs = soup.find_all("img")
-    img_without_alt = sum(1 for i in imgs if not i.get("alt"))
-    img_total = len(imgs)
+    # Filtrujemy obrazy, które wymagają alt (nie są dekoracyjne)
+    content_imgs = [i for i in imgs if not is_decorative_image(i)]
+    img_without_alt = sum(1 for i in content_imgs if not i.get("alt"))
+    img_total = len(content_imgs)
+    # Zachowujemy też info o wszystkich obrazach dla statystyk
+    img_total_all = len(imgs)
+    img_decorative_count = img_total_all - img_total
 
     # Linki
     a_tags = soup.find_all("a", href=True)
@@ -116,30 +166,41 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
         if name and content:
             twitter_data[name] = content
 
-    # Structured Data (Schema.org)
+    # Structured Data (Schema.org) - używamy extruct dla pełnej ekstrakcji
     try:
         structured = extruct.extract(
             html,
             base_url=get_base_url(html, url),
-            syntaxes=["json-ld", "microdata", "opengraph"],
+            syntaxes=["json-ld", "microdata", "rdfa"],  # Dodano RDFa
             uniform=True
         )
     except Exception:
-        structured = {"json-ld": [], "microdata": [], "opengraph": []}
+        structured = {"json-ld": [], "microdata": [], "rdfa": []}
 
-    # Wyodrębnianie typów z JSON-LD
+    # Wyodrębnianie typów z JSON-LD (w tym z @graph)
     jsonld_types = []
-    for node in structured.get("json-ld", []):
-        t = node.get("@type")
-        if isinstance(t, list):
-            jsonld_types += t
-        elif t:
-            jsonld_types.append(t)
+    jsonld_raw = structured.get("json-ld", [])
+    for node in jsonld_raw:
+        # Obsługa @graph (wiele schematów w jednym JSON-LD)
+        if isinstance(node, dict) and '@graph' in node:
+            for graph_item in node.get('@graph', []):
+                if isinstance(graph_item, dict):
+                    t = graph_item.get("@type")
+                    if isinstance(t, list):
+                        jsonld_types += t
+                    elif t:
+                        jsonld_types.append(t)
+        else:
+            t = node.get("@type") if isinstance(node, dict) else None
+            if isinstance(t, list):
+                jsonld_types += t
+            elif t:
+                jsonld_types.append(t)
 
     # Wyodrębnianie typów z Microdata
     microdata_types = []
     for node in structured.get("microdata", []):
-        t = node.get("@type")
+        t = node.get("@type") if isinstance(node, dict) else None
         if isinstance(t, list):
             microdata_types += t
         elif t:
@@ -149,8 +210,31 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
                 t = t.split("/")[-1]
             microdata_types.append(t)
 
-    # Łączymy oba źródła schematów (bez duplikatów)
-    all_schema_types = list(dict.fromkeys(jsonld_types + microdata_types))
+    # Wyodrębnianie typów z RDFa
+    rdfa_types = []
+    for node in structured.get("rdfa", []):
+        t = node.get("@type") if isinstance(node, dict) else None
+        if isinstance(t, list):
+            rdfa_types += t
+        elif t:
+            if isinstance(t, str) and "/" in t:
+                t = t.split("/")[-1]
+            rdfa_types.append(t)
+
+    # Dodatkowe sprawdzenie: szukamy itemtype w HTML (microdata w head/body)
+    itemtype_elements = soup.find_all(attrs={"itemtype": True})
+    for elem in itemtype_elements:
+        itemtype = elem.get("itemtype", "")
+        if "schema.org" in itemtype:
+            schema_type = itemtype.split("/")[-1]
+            if schema_type and schema_type not in microdata_types:
+                microdata_types.append(schema_type)
+
+    # Łączymy wszystkie źródła schematów (bez duplikatów)
+    all_schema_types = list(dict.fromkeys(jsonld_types + microdata_types + rdfa_types))
+
+    # Sprawdź czy strona jest systemowa
+    is_system = is_system_page(url)
 
     # Tekst i analiza treści
     text = clean_text(soup)
@@ -186,6 +270,8 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
         "h2_count": len(h2),
         "h3_count": len(h3),
         "img_total": img_total,
+        "img_total_all": img_total_all,  # Wszystkie obrazy (w tym dekoracyjne)
+        "img_decorative": img_decorative_count,  # Obrazy pominięte (dekoracyjne/techniczne)
         "img_without_alt": img_without_alt,
         "img_alt_ratio": round((img_total - img_without_alt) / max(1, img_total) * 100, 1),
         "has_viewport": has_viewport,
@@ -199,8 +285,10 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
         "has_twitter_card": "twitter:card" in twitter_data,
         "jsonld_types": jsonld_types,
         "microdata_types": microdata_types,
+        "rdfa_types": rdfa_types,  # Dodano RDFa
         "all_schema_types": all_schema_types,
         "schema_count": len(all_schema_types),
+        "has_any_schema": len(all_schema_types) > 0,  # Flaga czy jest jakikolwiek schema
         "text_len": text_len,
         "word_count": len(text.split()),
         "links": links,
@@ -211,4 +299,5 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
         "geo_signals": geo_signals,
         "meta_scores": meta_scores,
         "is_excluded": is_excluded_url(url),
+        "is_system_page": is_system,  # Strona systemowa (cart, login, account)
     }
