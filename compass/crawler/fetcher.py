@@ -127,6 +127,7 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
     except Exception:
         structured = {"json-ld": [], "microdata": [], "opengraph": []}
 
+    # Wyodrębnianie typów z JSON-LD
     jsonld_types = []
     for node in structured.get("json-ld", []):
         t = node.get("@type")
@@ -134,7 +135,22 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
             jsonld_types += t
         elif t:
             jsonld_types.append(t)
-    jsonld_types = list(dict.fromkeys(jsonld_types))
+
+    # Wyodrębnianie typów z Microdata
+    microdata_types = []
+    for node in structured.get("microdata", []):
+        t = node.get("@type")
+        if isinstance(t, list):
+            microdata_types += t
+        elif t:
+            # Microdata często ma pełne URL-e typu schema.org/Article
+            # Wyodrębniamy tylko nazwę typu
+            if isinstance(t, str) and "/" in t:
+                t = t.split("/")[-1]
+            microdata_types.append(t)
+
+    # Łączymy oba źródła schematów (bez duplikatów)
+    all_schema_types = list(dict.fromkeys(jsonld_types + microdata_types))
 
     # Tekst i analiza treści
     text = clean_text(soup)
@@ -145,14 +161,14 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
     eeat_signals = analyze_eeat_signals(soup, text, url)
     meta_scores = calculate_meta_score(title, desc)
 
-    # Sygnały GEO (Schema.org types)
+    # Sygnały GEO (Schema.org types) - sprawdzamy zarówno JSON-LD jak i Microdata
     geo_signals = {
-        "has_faq_schema": "FAQPage" in jsonld_types,
-        "has_article_schema": any(t in jsonld_types for t in ("Article", "NewsArticle", "BlogPosting")),
-        "has_org_schema": any(t in jsonld_types for t in ("Organization", "LocalBusiness")),
-        "has_breadcrumbs": "BreadcrumbList" in jsonld_types,
-        "has_review_schema": any(t in jsonld_types for t in ("Review", "AggregateRating")),
-        "has_product_schema": "Product" in jsonld_types,
+        "has_faq_schema": "FAQPage" in all_schema_types,
+        "has_article_schema": any(t in all_schema_types for t in ("Article", "NewsArticle", "BlogPosting")),
+        "has_org_schema": any(t in all_schema_types for t in ("Organization", "LocalBusiness")),
+        "has_breadcrumbs": "BreadcrumbList" in all_schema_types,
+        "has_review_schema": any(t in all_schema_types for t in ("Review", "AggregateRating")),
+        "has_product_schema": "Product" in all_schema_types,
         "clear_hierarchy": len(h1) == 1 and len(h2) > 0,
         "sufficient_text": text_len >= 1200,
         "has_navigation_schema": any('navigation' in str(s).lower() for s in soup.find_all(['nav'])),
@@ -182,7 +198,9 @@ def parse_page(html: str, url: str) -> Dict[str, Any]:
         "has_og_description": "og:description" in og_data,
         "has_twitter_card": "twitter:card" in twitter_data,
         "jsonld_types": jsonld_types,
-        "schema_count": len(jsonld_types),
+        "microdata_types": microdata_types,
+        "all_schema_types": all_schema_types,
+        "schema_count": len(all_schema_types),
         "text_len": text_len,
         "word_count": len(text.split()),
         "links": links,

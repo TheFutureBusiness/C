@@ -1078,11 +1078,11 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     # =========================
     # 6. OPEN GRAPH / TWITTER
     # =========================
-    add_section_heading(doc, '6. Open Graph i Twitter Cards', 1, icon='📢')
+    add_section_heading(doc, '6. Open Graph und Twitter Cards', 1, icon='📢')
 
     doc.add_paragraph(
-        "Social media to potężne źródło ruchu. Gdy ktoś udostępnia link do Twojej strony na Facebooku, LinkedIn czy X (Twitter), te platformy generują 'podgląd' – miniaturkę z obrazkiem, tytułem i opisem. "
-        "To pierwsze wrażenie decyduje, czy użytkownik kliknie."
+        "Social Media ist eine wichtige Traffic-Quelle. Wenn jemand einen Link zu Ihrer Seite auf Facebook, LinkedIn oder X (Twitter) teilt, generieren diese Plattformen eine 'Vorschau' – ein Miniaturbild mit Bild, Titel und Beschreibung. "
+        "Dieser erste Eindruck entscheidet, ob der Nutzer klickt."
     )
     doc.add_paragraph()
 
@@ -1091,17 +1091,17 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
         total = summary['pages_analyzed']
         count = len(issues['no_og_tags'])
         pct = round((count / total) * 100, 1) if total > 0 else 0
-        run = p.add_run(f"Braki w Open Graph: {count}/{total} stron ({pct}%)")
+        run = p.add_run(f"Fehlende Open Graph Tags: {count}/{total} Seiten ({pct}%)")
         run.bold = True
-        doc.add_paragraph("Open Graph to meta tagi używane przez Facebook, LinkedIn, WhatsApp, Messenger. Bez nich:")
-        doc.add_paragraph("• Platformy same wybierają obrazek (często nietrafiający w sedno)", style='List Bullet')
-        doc.add_paragraph("• Opis może być losowy fragment tekstu", style='List Bullet')
-        doc.add_paragraph("• Tracisz kontrolę nad przekazem marketingowym", style='List Bullet')
-        doc.add_paragraph("• Niższy CTR z social media (nawet o 50%!)", style='List Bullet')
+        doc.add_paragraph("Open Graph sind Meta-Tags, die von Facebook, LinkedIn, WhatsApp, Messenger verwendet werden. Ohne sie:")
+        doc.add_paragraph("• Plattformen wählen selbst ein Bild (oft unpassend)", style='List Bullet')
+        doc.add_paragraph("• Beschreibung kann ein zufälliger Textabschnitt sein", style='List Bullet')
+        doc.add_paragraph("• Sie verlieren die Kontrolle über die Marketing-Botschaft", style='List Bullet')
+        doc.add_paragraph("• Niedrigere CTR aus Social Media (bis zu 50%!)", style='List Bullet')
         doc.add_paragraph()
 
         p = doc.add_paragraph()
-        run = p.add_run("Strony wymagające dodania Open Graph:")
+        run = p.add_run("Seiten, die Open Graph benötigen:")
         run.bold = True
         run.font.size = Pt(11)
         for item in issues['no_og_tags'][:15]:
@@ -1112,19 +1112,19 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
 
             missing_parts = []
             if not has_image:
-                missing_parts.append("obrazek")
+                missing_parts.append("Bild")
             if not has_title:
-                missing_parts.append("tytuł")
+                missing_parts.append("Titel")
             if not has_desc:
-                missing_parts.append("opis")
+                missing_parts.append("Beschreibung")
 
             if missing_parts:
-                doc.add_paragraph(f"• {url}\n  Brak: {', '.join(missing_parts)}", style='List Bullet')
+                doc.add_paragraph(f"• {url}\n  Fehlt: {', '.join(missing_parts)}", style='List Bullet')
             else:
                 doc.add_paragraph(f"• {url}", style='List Bullet')
 
         if len(issues['no_og_tags']) > 15:
-            doc.add_paragraph(f"...oraz {len(issues['no_og_tags']) - 15} innych stron")
+            doc.add_paragraph(f"...und {len(issues['no_og_tags']) - 15} weitere Seiten")
         doc.add_paragraph()
 
     if issues['no_twitter_cards']:
@@ -1132,22 +1132,22 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
         total = summary['pages_analyzed']
         count = len(issues['no_twitter_cards'])
         pct = round((count / total) * 100, 1) if total > 0 else 0
-        run = p.add_run(f"Brak Twitter Cards: {count}/{total} stron ({pct}%)")
+        run = p.add_run(f"Fehlende Twitter Cards: {count}/{total} Seiten ({pct}%)")
         run.bold = True
         doc.add_paragraph(
-            "Twitter Cards to odpowiednik Open Graph dla platformy X (dawniej Twitter). Działają analogicznie – "
-            "kontrolują, jak Twój link wygląda po udostępnieniu."
+            "Twitter Cards sind das Äquivalent zu Open Graph für die Plattform X (früher Twitter). Sie funktionieren analog – "
+            "sie steuern, wie Ihr Link beim Teilen aussieht."
         )
         doc.add_paragraph()
 
         p = doc.add_paragraph()
-        run = p.add_run("Strony wymagające dodania Twitter Cards:")
+        run = p.add_run("Seiten, die Twitter Cards benötigen:")
         run.bold = True
         run.font.size = Pt(11)
         for url in issues['no_twitter_cards'][:15]:
             doc.add_paragraph(f"• {url}", style='List Bullet')
         if len(issues['no_twitter_cards']) > 15:
-            doc.add_paragraph(f"...oraz {len(issues['no_twitter_cards']) - 15} innych stron")
+            doc.add_paragraph(f"...und {len(issues['no_twitter_cards']) - 15} weitere Seiten")
         doc.add_paragraph()
 
     if SHOW_REMEDIATIONS:
@@ -1175,11 +1175,14 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     # =========================
     # 7. SCHEMA
     # =========================
-    add_section_heading(doc, '7. Dane Strukturalne (Schema.org)', 1, icon='🔗')
+    add_section_heading(doc, '7. Strukturierte Daten (Schema.org)', 1, icon='🔗')
 
     doc.add_paragraph(
-        "Schema.org (JSON-LD) to 'język techniczny', którym mówisz Google o zawartości swojej strony. "
-        "Dzięki niemu Google może wyświetlić Twoją stronę w bardziej atrakcyjny sposób w wynikach wyszukiwania – tzw. rich snippets."
+        "Schema.org (JSON-LD und Microdata) ist die 'technische Sprache', mit der Sie Google über den Inhalt Ihrer Seite informieren. "
+        "Dadurch kann Google Ihre Seite attraktiver in den Suchergebnissen anzeigen – sogenannte Rich Snippets."
+    )
+    doc.add_paragraph(
+        "HINWEIS: Dieser Audit erkennt sowohl JSON-LD als auch Microdata-Formate."
     )
     doc.add_paragraph()
 
@@ -1187,24 +1190,24 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
 
     if schema_percentage >= 70:
         p = doc.add_paragraph()
-        run = p.add_run(f"✅ {summary['pages_with_schema']} stron ma dane strukturalne ({schema_percentage:.1f}%)")
+        run = p.add_run(f"✅ {summary['pages_with_schema']} Seiten haben strukturierte Daten ({schema_percentage:.1f}%)")
         run.font.color.rgb = RGBColor(0, 150, 0)
         run.bold = True
     else:
         p = doc.add_paragraph()
         run = p.add_run(
-            f"⚠️ Tylko {summary['pages_with_schema']} stron ma dane strukturalne ({schema_percentage:.1f}%)"
+            f"⚠️ Nur {summary['pages_with_schema']} Seiten haben strukturierte Daten ({schema_percentage:.1f}%)"
         )
         run.font.color.rgb = RGBColor(200, 100, 0)
         run.bold = True
 
     doc.add_paragraph()
-    doc.add_paragraph("Co tracisz bez Schema.org:")
-    doc.add_paragraph("• Rich snippets: gwiazdki ocen, ceny produktów, FAQ rozwijane w SERP", style='List Bullet')
-    doc.add_paragraph("• Breadcrumbs (ścieżka nawigacji) w wynikach Google", style='List Bullet')
-    doc.add_paragraph("• Featured snippet (pozycja 0) – trudniej bez struktury", style='List Bullet')
-    doc.add_paragraph("• Karuzele produktów/artykułów w mobilnych wynikach", style='List Bullet')
-    doc.add_paragraph("• Lepsze zrozumienie kontekstu przez Google (ważne dla AI)", style='List Bullet')
+    doc.add_paragraph("Was Sie ohne Schema.org verlieren:")
+    doc.add_paragraph("• Rich Snippets: Sternebewertungen, Produktpreise, aufklappbare FAQs in SERP", style='List Bullet')
+    doc.add_paragraph("• Breadcrumbs (Navigationspfad) in Google-Ergebnissen", style='List Bullet')
+    doc.add_paragraph("• Featured Snippet (Position 0) – schwieriger ohne Struktur", style='List Bullet')
+    doc.add_paragraph("• Produkt-/Artikelkarussells in mobilen Ergebnissen", style='List Bullet')
+    doc.add_paragraph("• Besseres Kontextverständnis durch Google (wichtig für AI)", style='List Bullet')
     doc.add_paragraph()
 
     if issues['missing_schema']:
@@ -1212,30 +1215,30 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
         total = summary['pages_analyzed']
         count = len(issues['missing_schema'])
         pct = round((count / total) * 100, 1) if total > 0 else 0
-        run = p.add_run(f"Strony bez Schema.org: {count}/{total} ({pct}%)")
+        run = p.add_run(f"Seiten ohne Schema.org: {count}/{total} ({pct}%)")
         run.bold = True
         doc.add_paragraph()
 
         p = doc.add_paragraph()
-        run = p.add_run("Przykłady stron wymagających Schema:")
+        run = p.add_run("Beispiele für Seiten, die Schema benötigen:")
         run.bold = True
         run.font.size = Pt(11)
         for url in issues['missing_schema'][:20]:
             doc.add_paragraph(f"• {url}", style='List Bullet')
         if len(issues['missing_schema']) > 20:
-            doc.add_paragraph(f"...oraz {len(issues['missing_schema']) - 20} innych stron")
+            doc.add_paragraph(f"...und {len(issues['missing_schema']) - 20} weitere Seiten")
 
         doc.add_paragraph()
         p = doc.add_paragraph()
-        run = p.add_run("💡 Rekomendacja:")
+        run = p.add_run("💡 Empfehlung:")
         run.bold = True
         run.font.color.rgb = RGBColor(50, 100, 200)
-        doc.add_paragraph("Priorytetowo dodaj Schema do:")
-        doc.add_paragraph("1. Strony głównej (Organization/LocalBusiness)", style='List Number')
-        doc.add_paragraph("2. Stron produktów (Product z ceną i dostępnością)", style='List Number')
-        doc.add_paragraph("3. Artykułów blogowych (Article/BlogPosting)", style='List Number')
-        doc.add_paragraph("4. FAQ/Pytania (FAQPage)", style='List Number')
-        doc.add_paragraph("5. Opinii klientów (Review/AggregateRating)", style='List Number')
+        doc.add_paragraph("Prioritär Schema hinzufügen zu:")
+        doc.add_paragraph("Startseite (Organization/LocalBusiness)", style='List Bullet')
+        doc.add_paragraph("Produktseiten (Product mit Preis und Verfügbarkeit)", style='List Bullet')
+        doc.add_paragraph("Blog-Artikel (Article/BlogPosting)", style='List Bullet')
+        doc.add_paragraph("FAQ-Seiten (FAQPage)", style='List Bullet')
+        doc.add_paragraph("Kundenbewertungen (Review/AggregateRating)", style='List Bullet')
 
     doc.add_page_break()
 
@@ -1245,21 +1248,30 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     add_section_heading(doc, '8. E-E-A-T', 1, icon='🏆')
 
     doc.add_paragraph(
-        "E-E-A-T to akronim od Experience, Expertise, Authoritativeness, Trustworthiness – po polsku: "
-        "Doświadczenie, Eksperckość, Autorytet, Zaufanie."
+        "E-E-A-T steht für Experience, Expertise, Authoritativeness, Trustworthiness – auf Deutsch: "
+        "Erfahrung, Expertise, Autorität, Vertrauenswürdigkeit."
     )
     doc.add_paragraph()
 
-    doc.add_paragraph("Co sprawdza Google oceniając E-E-A-T:")
-    doc.add_paragraph("• Czy autor jest ekspertem w temacie? (widoczne imię, nazwisko, bio)", style='List Bullet')
-    doc.add_paragraph("• Czy treść jest aktualna? (data publikacji, data aktualizacji)", style='List Bullet')
-    doc.add_paragraph("• Czy strona jest autorytetem? (linki z wiarygodnych źródeł .edu/.gov)", style='List Bullet')
-    doc.add_paragraph("• Czy można zaufać? (HTTPS, dane kontaktowe, polityka prywatności)", style='List Bullet')
-    doc.add_paragraph("• Czy są opinie/recenzje? (social proof)", style='List Bullet')
+    doc.add_paragraph(
+        "WICHTIG: E-E-A-T wird kontextabhängig bewertet. Nicht jede Seite braucht alle Signale:"
+    )
+    doc.add_paragraph("• Blog/Artikel: Autor-Box und Veröffentlichungsdatum wichtig", style='List Bullet')
+    doc.add_paragraph("• Service-Seiten: Autor nicht erforderlich, Kontaktdaten und Expertise wichtiger", style='List Bullet')
+    doc.add_paragraph("• Über uns: Zertifikate, Auszeichnungen, Erfahrung besonders relevant", style='List Bullet')
+    doc.add_paragraph("• Alle Seiten: HTTPS und Kontaktmöglichkeiten im Footer", style='List Bullet')
+    doc.add_paragraph()
+
+    doc.add_paragraph("Was Google bei E-E-A-T bewertet:")
+    doc.add_paragraph("• Ist der Autor ein Experte? (sichtbarer Name, Foto, Bio – nur bei Blog)", style='List Bullet')
+    doc.add_paragraph("• Ist der Inhalt aktuell? (Veröffentlichungsdatum, Aktualisierungsdatum – nur bei Blog)", style='List Bullet')
+    doc.add_paragraph("• Ist die Seite eine Autorität? (Links zu .edu/.gov Quellen)", style='List Bullet')
+    doc.add_paragraph("• Kann man vertrauen? (HTTPS, Kontaktdaten, Datenschutz)", style='List Bullet')
+    doc.add_paragraph("• Gibt es Bewertungen/Rezensionen? (Social Proof)", style='List Bullet')
     doc.add_paragraph()
 
     p = doc.add_paragraph()
-    run = p.add_run('Średnia ocena E-E-A-T: ')
+    run = p.add_run('Durchschnittliche E-E-A-T Bewertung: ')
     run.bold = True
     if summary['avg_eeat_score'] >= 70:
         run = p.add_run(f"✅ {summary['avg_eeat_score']}%")
@@ -1278,15 +1290,16 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
         total = summary['pages_analyzed']
         count = len(issues['weak_eeat'])
         pct = round((count / total) * 100, 1) if total > 0 else 0
-        run = p.add_run(f"Strony ze słabym E-E-A-T (<50%): {count}/{total} ({pct}%)")
+        run = p.add_run(f"Seiten mit schwachem E-E-A-T (<50%): {count}/{total} ({pct}%)")
         run.bold = True
         doc.add_paragraph(
-            "Te strony mają niską ocenę zaufania w oczach Google. To nie znaczy, że są 'złe' – po prostu brakuje im sygnałów jakości."
+            "Diese Seiten haben aus Google-Sicht einen niedrigen Vertrauenswert. Das bedeutet nicht, dass sie 'schlecht' sind – "
+            "es fehlen nur einige Qualitätssignale (je nach Seitentyp unterschiedlich gewichtet)."
         )
         doc.add_paragraph()
 
         p = doc.add_paragraph()
-        run = p.add_run("Przykłady stron ze słabym E-E-A-T:")
+        run = p.add_run("Beispiele für Seiten mit schwachem E-E-A-T:")
         run.bold = True
         run.font.size = Pt(11)
         for item in issues['weak_eeat'][:15]:
@@ -1297,39 +1310,39 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             missing_readable = []
             for key in missing:
                 if key == 'has_author':
-                    missing_readable.append("autor")
+                    missing_readable.append("Autor")
                 elif key == 'has_date':
-                    missing_readable.append("data publikacji")
+                    missing_readable.append("Veröffentlichungsdatum")
                 elif key == 'has_expertise_signals':
-                    missing_readable.append("sygnały eksperckości")
+                    missing_readable.append("Expertise-Signale")
                 elif key == 'has_quality_external_links':
-                    missing_readable.append("linki do źródeł")
+                    missing_readable.append("Quellenlinks")
                 elif key == 'has_contact_info':
-                    missing_readable.append("dane kontaktowe")
+                    missing_readable.append("Kontaktdaten")
                 elif key == 'has_reviews':
-                    missing_readable.append("opinie")
+                    missing_readable.append("Bewertungen")
 
             if missing_readable:
                 doc.add_paragraph(
-                    f"• {url} ({eeat_pct:.1f}%)\n  Brak: {', '.join(missing_readable[:3])}",
+                    f"• {url} ({eeat_pct:.1f}%)\n  Fehlt: {', '.join(missing_readable[:3])}",
                     style='List Bullet'
                 )
             else:
                 doc.add_paragraph(f"• {url} ({eeat_pct:.1f}%)", style='List Bullet')
 
         if len(issues['weak_eeat']) > 15:
-            doc.add_paragraph(f"...oraz {len(issues['weak_eeat']) - 15} innych stron")
+            doc.add_paragraph(f"...und {len(issues['weak_eeat']) - 15} weitere Seiten")
 
         doc.add_paragraph()
         p = doc.add_paragraph()
-        run = p.add_run("💡 Jak poprawić E-E-A-T:")
+        run = p.add_run("💡 E-E-A-T verbessern (kontextabhängig):")
         run.bold = True
         run.font.color.rgb = RGBColor(50, 100, 200)
-        doc.add_paragraph("1. Dodaj ramkę 'O autorze' z imieniem, nazwiskiem, zdjęciem, bio", style='List Number')
-        doc.add_paragraph("2. Wstaw datę publikacji i 'Ostatnia aktualizacja: [data]'", style='List Number')
-        doc.add_paragraph("3. Linkuj do wiarygodnych źródeł (.edu, .gov, badania naukowe)", style='List Number')
-        doc.add_paragraph("4. Dodaj certyfikaty, nagrody, doświadczenie firmy", style='List Number')
-        doc.add_paragraph("5. Umieść widoczne dane kontaktowe (telefon, email, adres)", style='List Number')
+        doc.add_paragraph("Bei Blog-Artikeln: Autor-Box mit Name, Foto, Bio hinzufügen", style='List Bullet')
+        doc.add_paragraph("Bei Blog-Artikeln: Veröffentlichungsdatum und 'Letzte Aktualisierung' anzeigen", style='List Bullet')
+        doc.add_paragraph("Überall: Links zu vertrauenswürdigen Quellen (.edu, .gov, Studien)", style='List Bullet')
+        doc.add_paragraph("Auf 'Über uns': Zertifikate, Auszeichnungen, Unternehmenserfahrung", style='List Bullet')
+        doc.add_paragraph("Im Footer: Sichtbare Kontaktdaten (Telefon, E-Mail, Adresse)", style='List Bullet')
 
     doc.add_page_break()
 
@@ -1339,12 +1352,17 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     add_section_heading(doc, '9. Local SEO (NAP)', 1, icon='📍')
 
     doc.add_paragraph(
-        "NAP to skrót od Name, Address, Phone – czyli nazwa firmy, adres i telefon. To podstawa lokalnego SEO."
+        "NAP steht für Name, Address, Phone – also Firmenname, Adresse und Telefon. Das ist die Grundlage für lokales SEO."
     )
-    doc.add_paragraph("Google sprawdza, czy dane NAP są:",)
-    doc.add_paragraph("• Spójne (takie same wszędzie: strona, Google Maps, Facebook, wizytówki)", style='List Bullet')
-    doc.add_paragraph("• Widoczne (łatwo znaleźć na stronie)", style='List Bullet')
-    doc.add_paragraph("• Ustrukturyzowane (Schema.org LocalBusiness)", style='List Bullet')
+    doc.add_paragraph(
+        "HINWEIS: NAP-Daten sollten einmal im Footer oder auf der Kontaktseite vorhanden sein. "
+        "Wenn sie dort korrekt eingebunden sind, gilt die Website als NAP-optimiert."
+    )
+    doc.add_paragraph()
+    doc.add_paragraph("Google prüft, ob NAP-Daten:",)
+    doc.add_paragraph("• Konsistent sind (überall gleich: Website, Google Maps, Facebook, Visitenkarten)", style='List Bullet')
+    doc.add_paragraph("• Sichtbar sind (leicht auf der Seite zu finden, z.B. im Footer)", style='List Bullet')
+    doc.add_paragraph("• Strukturiert sind (Schema.org Organization/LocalBusiness)", style='List Bullet')
     doc.add_paragraph()
 
     local_percentage = (summary['local_optimized_pages'] / max(1, summary['pages_analyzed'])) * 100
@@ -1352,24 +1370,24 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
     if local_percentage >= 50:
         p = doc.add_paragraph()
         run = p.add_run(
-            f"✅ {summary['local_optimized_pages']} stron zoptymalizowanych pod NAP ({local_percentage:.1f}%)"
+            f"✅ {summary['local_optimized_pages']} Seiten NAP-optimiert ({local_percentage:.1f}%)"
         )
         run.font.color.rgb = RGBColor(0, 150, 0)
         run.bold = True
     else:
         p = doc.add_paragraph()
         run = p.add_run(
-            f"⚠️ Tylko {summary['local_optimized_pages']} stron posiada NAP ({local_percentage:.1f}%)"
+            f"⚠️ Nur {summary['local_optimized_pages']} Seiten haben NAP ({local_percentage:.1f}%)"
         )
         run.font.color.rgb = RGBColor(200, 100, 0)
         run.bold = True
 
     doc.add_paragraph()
-    doc.add_paragraph("Dlaczego NAP jest ważny:")
-    doc.add_paragraph("• Google Local Pack (3 wyniki na mapie) wymaga spójnych danych", style='List Bullet')
-    doc.add_paragraph("• Użytkownicy szukający 'firma + miasto' trafiają na lokalne wyniki", style='List Bullet')
-    doc.add_paragraph("• Zaufanie: widoczny telefon i adres = większa konwersja", style='List Bullet')
-    doc.add_paragraph("• Voice search ('Hey Google, znajdź X w pobliżu') preferuje NAP", style='List Bullet')
+    doc.add_paragraph("Warum NAP wichtig ist:")
+    doc.add_paragraph("• Google Local Pack (3 Ergebnisse auf der Karte) erfordert konsistente Daten", style='List Bullet')
+    doc.add_paragraph("• Nutzer, die nach 'Firma + Stadt' suchen, landen auf lokalen Ergebnissen", style='List Bullet')
+    doc.add_paragraph("• Vertrauen: sichtbare Telefonnummer und Adresse = höhere Conversion", style='List Bullet')
+    doc.add_paragraph("• Voice Search ('Hey Google, finde X in der Nähe') bevorzugt NAP", style='List Bullet')
     doc.add_paragraph()
 
     if issues['poor_local_seo']:
@@ -1377,12 +1395,12 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
         total = summary['pages_analyzed']
         count = len(issues['poor_local_seo'])
         pct = round((count / total) * 100, 1) if total > 0 else 0
-        run = p.add_run(f"Strony bez poprawnego NAP: {count}/{total} ({pct}%)")
+        run = p.add_run(f"Seiten ohne korrektes NAP: {count}/{total} ({pct}%)")
         run.bold = True
         doc.add_paragraph()
 
         p = doc.add_paragraph()
-        run = p.add_run("Przykłady stron wymagających poprawy Local SEO:")
+        run = p.add_run("Beispiele für Seiten, die Local SEO Verbesserung benötigen:")
         run.bold = True
         run.font.size = Pt(11)
         for item in issues['poor_local_seo'][:15]:
@@ -1394,11 +1412,11 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
 
             issues_list = []
             if phones == 0:
-                issues_list.append("brak telefonu")
+                issues_list.append("keine Telefonnummer")
             if not has_address:
-                issues_list.append("brak adresu")
+                issues_list.append("keine Adresse")
             if not has_schema:
-                issues_list.append("brak Schema LocalBusiness")
+                issues_list.append("kein Schema LocalBusiness")
 
             if issues_list:
                 doc.add_paragraph(
@@ -1409,37 +1427,37 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
                 doc.add_paragraph(f"• {url} (NAP: {nap_score}/3)", style='List Bullet')
 
         if len(issues['poor_local_seo']) > 15:
-            doc.add_paragraph(f"...oraz {len(issues['poor_local_seo']) - 15} innych stron")
+            doc.add_paragraph(f"...und {len(issues['poor_local_seo']) - 15} weitere Seiten")
 
         doc.add_paragraph()
         p = doc.add_paragraph()
-        run = p.add_run("💡 Jak poprawić Local SEO:")
+        run = p.add_run("💡 Local SEO verbessern:")
         run.bold = True
         run.font.color.rgb = RGBColor(50, 100, 200)
-        doc.add_paragraph("1. Dodaj widoczną stopkę z: nazwa firmy, adres, telefon, email", style='List Number')
-        doc.add_paragraph("2. Wdróż Schema.org LocalBusiness (JSON-LD) z pełnymi danymi NAP", style='List Number')
-        doc.add_paragraph("3. Sprawdź spójność: te same dane na Google Maps, Facebook, stronie", style='List Number')
-        doc.add_paragraph("4. Dodaj mapę Google (embed) ze wskazaniem lokalizacji", style='List Number')
-        doc.add_paragraph("5. Stwórz dedykowaną podstronę 'Kontakt' z pełnymi danymi", style='List Number')
+        doc.add_paragraph("Sichtbaren Footer mit: Firmenname, Adresse, Telefon, E-Mail hinzufügen", style='List Bullet')
+        doc.add_paragraph("Schema.org Organization/LocalBusiness (JSON-LD) mit vollständigen NAP-Daten implementieren", style='List Bullet')
+        doc.add_paragraph("Konsistenz prüfen: gleiche Daten auf Google Maps, Facebook, Website", style='List Bullet')
+        doc.add_paragraph("Google Maps (Embed) mit Standortangabe hinzufügen", style='List Bullet')
+        doc.add_paragraph("Dedizierte 'Kontakt'-Seite mit vollständigen Daten erstellen", style='List Bullet')
 
     doc.add_page_break()
 
     # =========================
-    # 10. JAKOŚĆ TREŚCI
+    # 10. INHALTSQUALITÄT
     # =========================
-    add_section_heading(doc, '10. Jakość Treści', 1, icon='📝')
+    add_section_heading(doc, '10. Inhaltsqualität', 1, icon='📝')
 
     doc.add_paragraph(
-        "Google nie lubi 'cienkich' stron – czyli takich, które mają bardzo mało tekstu (poniżej 300 słów). "
-        "Im więcej merytorycznej treści, tym lepiej."
+        "Google mag keine 'dünnen' Seiten – also solche mit sehr wenig Text (unter 300 Wörtern). "
+        "Je mehr fachlicher Inhalt, desto besser."
     )
     doc.add_paragraph()
 
-    doc.add_paragraph("Co ryzykujesz mając thin content:")
-    doc.add_paragraph("• Google może uznać stronę za low-quality i obniżyć jej ranking", style='List Bullet')
-    doc.add_paragraph("• Trudniej o featured snippet (pozycja 0) – potrzeba więcej kontekstu", style='List Bullet')
-    doc.add_paragraph("• Użytkownicy szybko opuszczają stronę (wysoki bounce rate)", style='List Bullet')
-    doc.add_paragraph("• Mniejsza szansa na linki zewnętrzne (nikt nie linkuje 100-słownego tekstu)", style='List Bullet')
+    doc.add_paragraph("Risiken bei Thin Content:")
+    doc.add_paragraph("• Google kann die Seite als minderwertig einstufen und im Ranking herabsetzen", style='List Bullet')
+    doc.add_paragraph("• Schwieriger, Featured Snippet (Position 0) zu erreichen – mehr Kontext erforderlich", style='List Bullet')
+    doc.add_paragraph("• Nutzer verlassen die Seite schnell (hohe Absprungrate)", style='List Bullet')
+    doc.add_paragraph("• Geringere Chance auf Backlinks (niemand verlinkt einen 100-Wörter-Text)", style='List Bullet')
     doc.add_paragraph()
 
     if issues['thin_content']:
@@ -1447,12 +1465,12 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
         total = summary['pages_analyzed']
         count = len(issues['thin_content'])
         pct = round((count / total) * 100, 1) if total > 0 else 0
-        run = p.add_run(f"Strony z thin content (<300 słów): {count}/{total} ({pct}%)")
+        run = p.add_run(f"Seiten mit Thin Content (<300 Wörter): {count}/{total} ({pct}%)")
         run.bold = True
         doc.add_paragraph()
 
         p = doc.add_paragraph()
-        run = p.add_run("Strony wymagające rozbudowania treści:")
+        run = p.add_run("Seiten, die Inhaltserweiterung benötigen:")
         run.bold = True
         run.font.size = Pt(11)
         for item in issues['thin_content']:
@@ -1460,72 +1478,77 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             word_count = item.get('word_count', 0)
             text_len = item.get('text_len', 0)
 
-            doc.add_paragraph(f"• {url}\n  Słów: {word_count}, Znaków: {text_len}", style='List Bullet')
+            doc.add_paragraph(f"• {url}\n  Wörter: {word_count}, Zeichen: {text_len}", style='List Bullet')
 
         doc.add_paragraph()
         p = doc.add_paragraph()
-        run = p.add_run("💡 Jak poprawić:")
+        run = p.add_run("💡 Verbesserungsvorschläge:")
         run.bold = True
         run.font.color.rgb = RGBColor(50, 100, 200)
-        doc.add_paragraph("1. Rozbuduj treść do minimum 600–800 słów (artykuły: 1500+ słów)", style='List Number')
-        doc.add_paragraph("2. Dodaj wartość: praktyczne porady, case studies, przykłady", style='List Number')
-        doc.add_paragraph("3. Strukturyzuj: nagłówki H2/H3, listy punktowane, wyróżnienia", style='List Number')
-        doc.add_paragraph(
-            "4. Multimedialność: obrazy, infografiki, video (zaliczają się do 'treści')",
-            style='List Number'
-        )
-        doc.add_paragraph(
-            "5. FAQ: dodaj sekcję pytań i odpowiedzi (boost dla SEO i użytkownika)",
-            style='List Number'
-        )
+        doc.add_paragraph("Inhalt auf mindestens 600–800 Wörter erweitern (Artikel: 1500+ Wörter)", style='List Bullet')
+        doc.add_paragraph("Mehrwert bieten: praktische Tipps, Case Studies, Beispiele", style='List Bullet')
+        doc.add_paragraph("Strukturieren: H2/H3-Überschriften, Aufzählungen, Hervorhebungen", style='List Bullet')
+        doc.add_paragraph("Multimedialität: Bilder, Infografiken, Videos (zählen als 'Inhalt')", style='List Bullet')
+        doc.add_paragraph("FAQ: Fragen-und-Antworten-Bereich hinzufügen (SEO-Boost)", style='List Bullet')
     else:
         p = doc.add_paragraph()
-        run = p.add_run("✅ Brak problemów z thin content")
+        run = p.add_run("✅ Keine Thin Content Probleme")
         run.font.color.rgb = RGBColor(0, 150, 0)
         run.bold = True
-        doc.add_paragraph("Wszystkie strony mają odpowiednią ilość treści (>300 słów).")
+        doc.add_paragraph("Alle Seiten haben ausreichend Inhalt (>300 Wörter).")
 
     doc.add_page_break()
 
     # =========================
     # 11. BEZPIECZEŃSTWO
     # =========================
-    add_section_heading(doc, '11. Bezpieczeństwo (Security Headers)', 1, icon='🔒')
+    add_section_heading(doc, '11. Sicherheit (Security Headers)', 1, icon='🔒')
 
     doc.add_paragraph(
-        "Security headers to specjalne nagłówki HTTP, które serwer wysyła do przeglądarki, informując ją "
-        "'jak ma się zachować' z punktu widzenia bezpieczeństwa."
+        "Security Headers sind spezielle HTTP-Header, die der Server an den Browser sendet und ihm mitteilen, "
+        "'wie er sich verhalten soll' im Hinblick auf die Sicherheit."
     )
     doc.add_paragraph()
 
+    # Bestimmen des Sicherheitsstatus basierend auf dem Durchschnitt
     if summary['avg_security_score'] >= 80:
-        sec_status = "✅ Dobry"
+        sec_status = "✅ Ausgezeichnet"
         sec_color = RGBColor(0, 150, 0)
+        sec_msg = "Die Website erfüllt hohe Sicherheitsstandards."
     elif summary['avg_security_score'] >= 60:
-        sec_status = "⚠️ Średni"
-        sec_color = RGBColor(200, 100, 0)
+        sec_status = "🟡 Gut"
+        sec_color = RGBColor(200, 180, 0)
+        sec_msg = "Grundlegende Sicherheitsmaßnahmen sind vorhanden, aber Verbesserungen möglich."
     elif summary['avg_security_score'] >= 40:
-        sec_status = "🟠 Słaby"
-        sec_color = RGBColor(200, 50, 0)
+        sec_status = "🟠 Verbesserungswürdig"
+        sec_color = RGBColor(200, 100, 0)
+        sec_msg = "Einige Security Headers fehlen. Empfohlen: Konfiguration verbessern."
     else:
-        sec_status = "🔴 Krytyczny"
+        sec_status = "🔴 Kritisch"
         sec_color = RGBColor(200, 0, 0)
+        sec_msg = "Kritische Sicherheitslücken. Sofortige Maßnahmen erforderlich."
 
     add_status_line(
         doc,
-        "Status Security",
+        "Sicherheitsstatus",
         sec_status,
         sec_color,
-        extra=f"Śr. ocena: {summary['avg_security_score']}%"
+        extra=f"Durchschnitt: {summary['avg_security_score']}%"
     )
 
+    # Konsistente Nachricht basierend auf dem Score
+    p = doc.add_paragraph()
+    run = p.add_run(sec_msg)
+    run.italic = True
+    run.font.color.rgb = sec_color
+
     doc.add_paragraph()
-    doc.add_paragraph("Co ryzykujesz bez security headers:")
-    doc.add_paragraph("• Ataki XSS (Cross-Site Scripting) – wstrzykiwanie złośliwego kodu", style='List Bullet')
-    doc.add_paragraph("• Clickjacking – nakładanie niewidocznych przycisków na Twoją stronę", style='List Bullet')
-    doc.add_paragraph("• Man-in-the-middle – przechwytywanie danych użytkowników", style='List Bullet')
-    doc.add_paragraph("• Obniżone zaufanie użytkowników (przeglądarki pokazują warningi)", style='List Bullet')
-    doc.add_paragraph("• Gorsze pozycjonowanie (Google preferuje bezpieczne strony)", style='List Bullet')
+    doc.add_paragraph("Risiken ohne Security Headers:")
+    doc.add_paragraph("• XSS-Angriffe (Cross-Site Scripting) – Einschleusung von Schadcode", style='List Bullet')
+    doc.add_paragraph("• Clickjacking – Überlagern unsichtbarer Buttons auf Ihrer Seite", style='List Bullet')
+    doc.add_paragraph("• Man-in-the-middle – Abfangen von Benutzerdaten", style='List Bullet')
+    doc.add_paragraph("• Verringertes Benutzervertrauen (Browser zeigen Warnungen)", style='List Bullet')
+    doc.add_paragraph("• Schlechteres Ranking (Google bevorzugt sichere Seiten)", style='List Bullet')
     doc.add_paragraph()
 
     has_security_issues = (
@@ -1534,22 +1557,18 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
         summary['pages_with_mixed_content'] > 0
     )
 
-    if not has_security_issues:
-        p = doc.add_paragraph()
-        run = p.add_run("✅ Brak poważnych problemów bezpieczeństwa.")
-        run.font.color.rgb = RGBColor(0, 150, 0)
-        run.bold = True
-    else:
+    # Zeige detaillierte Probleme nur wenn spezifische Issues existieren
+    if has_security_issues:
         if issues['poor_security']:
             p = doc.add_paragraph()
             total = summary['pages_analyzed']
             count = len(issues['poor_security'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"🟠 Słabe bezpieczeństwo: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"🟠 Schwache Sicherheit: {count}/{total} Seiten ({pct}%)")
             run.bold = True
             doc.add_paragraph(
-                "Strony z oceną security <50% mają krytyczne braki w podstawowych nagłówkach zabezpieczających. "
-                "Poniżej endpointy z największymi problemami:"
+                "Seiten mit einem Security-Score <50% haben kritische Lücken bei grundlegenden Sicherheitsheadern. "
+                "Unten die Endpunkte mit den größten Problemen:"
             )
             doc.add_paragraph()
 
@@ -1566,12 +1585,12 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
                 run2.font.size = Pt(9)
 
                 if missing:
-                    run3 = p.add_run(f"  Brakuje: {', '.join(missing[:4])}")
+                    run3 = p.add_run(f"  Fehlt: {', '.join(missing[:4])}")
                     run3.font.size = Pt(9)
                     run3.italic = True
 
             if len(issues['poor_security']) > 10:
-                doc.add_paragraph(f"...oraz {len(issues['poor_security']) - 10} innych stron")
+                doc.add_paragraph(f"...und {len(issues['poor_security']) - 10} weitere Seiten")
             doc.add_paragraph()
 
         if issues['missing_security_headers']:
@@ -1579,36 +1598,36 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
             total = summary['pages_analyzed']
             count = len(issues['missing_security_headers'])
             pct = round((count / total) * 100, 1) if total > 0 else 0
-            run = p.add_run(f"🟡 Braki w security headers: {count}/{total} stron ({pct}%)")
+            run = p.add_run(f"🟡 Fehlende Security Headers: {count}/{total} Seiten ({pct}%)")
             run.bold = True
-            doc.add_paragraph("Strony z mniej niż 3 nagłówkami bezpieczeństwa (z 7 możliwych).")
+            doc.add_paragraph("Seiten mit weniger als 3 Sicherheitsheadern (von 7 möglichen).")
             doc.add_paragraph()
 
             doc.add_paragraph()
             p = doc.add_paragraph()
-            run = p.add_run("Najważniejsze security headers (czego brakuje):")
+            run = p.add_run("Wichtigste Security Headers (was fehlt):")
             run.bold = True
             run.font.size = Pt(11)
 
             security_headers_info = [
                 ("HSTS (Strict-Transport-Security)",
-                 "Wymusza połączenia HTTPS przez określony czas. Bez niego: możliwy atak man-in-the-middle, gdzie "
-                 "hacker przechwytuje dane przesyłane przez HTTP. Google od 2014 preferuje strony HTTPS w rankingu."),
+                 "Erzwingt HTTPS-Verbindungen für eine bestimmte Zeit. Ohne: Man-in-the-middle-Angriff möglich, bei dem "
+                 "Hacker über HTTP gesendete Daten abfangen. Google bevorzugt seit 2014 HTTPS-Seiten im Ranking."),
                 ("CSP (Content-Security-Policy)",
-                 "Określa, z jakich źródeł można ładować zasoby (skrypty, obrazy, CSS). Bez niego: łatwe ataki XSS "
-                 "(Cross-Site Scripting), gdzie hacker wstrzykuje złośliwy kod JavaScript na Twoją stronę."),
+                 "Legt fest, aus welchen Quellen Ressourcen (Skripte, Bilder, CSS) geladen werden dürfen. Ohne: einfache XSS-Angriffe "
+                 "(Cross-Site Scripting), bei denen Hacker bösartigen JavaScript-Code in Ihre Seite einschleusen."),
                 ("X-Frame-Options",
-                 "Zapobiega osadzeniu Twojej strony w iframe na innej witrynie. Bez niego: atak clickjacking – "
-                 "użytkownik myśli, że klika w jeden przycisk, a w rzeczywistości w inny."),
+                 "Verhindert die Einbettung Ihrer Seite in iframe auf anderen Websites. Ohne: Clickjacking-Angriff – "
+                 "Benutzer denkt, er klickt auf eine Schaltfläche, klickt aber tatsächlich auf eine andere."),
                 ("X-Content-Type-Options",
-                 "Blokuje 'MIME sniffing' przeglądarek – zgadywanie typu pliku. Bez niego: przeglądarka może potraktować "
-                 "plik tekstowy jako wykonywalny kod i uruchomić go (atak)."),
+                 "Blockiert 'MIME-Sniffing' der Browser – Erraten des Dateityps. Ohne: Browser kann eine Textdatei "
+                 "als ausführbaren Code behandeln und ausführen (Angriff)."),
                 ("Referrer-Policy",
-                 "Kontroluje, ile informacji o źródle ruchu jest przekazywane innym stronom. Bez niego: pełny URL "
-                 "(z parametrami, tokenami) może wyciec do zewnętrznych serwisów przez header Referer."),
+                 "Kontrolliert, wie viele Informationen über die Herkunft an andere Seiten weitergegeben werden. Ohne: "
+                 "die vollständige URL (mit Parametern, Tokens) kann an externe Dienste über den Referer-Header gelangen."),
                 ("Permissions-Policy",
-                 "Ogranicza dostęp do API przeglądarki (kamera, mikrofon, GPS, etc.). Bez niego: strony osadzone w "
-                 "iframe mogą prosić o dostęp do wrażliwych zasobów użytkownika."),
+                 "Beschränkt den Zugriff auf Browser-APIs (Kamera, Mikrofon, GPS usw.). Ohne: in iframe eingebettete "
+                 "Seiten können Zugriff auf sensible Benutzerressourcen anfordern."),
             ]
 
             for header_name, description in security_headers_info:
@@ -1622,7 +1641,7 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
 
             doc.add_paragraph()
             p = doc.add_paragraph()
-            run = p.add_run("Przykładowe endpointy z brakującymi headerami:")
+            run = p.add_run("Beispiel-Endpunkte mit fehlenden Headern:")
             run.bold = True
             run.font.size = Pt(11)
 

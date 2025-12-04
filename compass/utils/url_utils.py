@@ -44,6 +44,55 @@ def absolutize(base: str, link: str) -> str:
     return url_normalize(urllib.parse.urljoin(base, link))
 
 
+def normalize_url_for_analysis(url: str) -> str:
+    """
+    Normalizuje URL do analizy - usuwa fragmenty (#) i parametry query (?).
+    Dzięki temu unikamy duplikatów typu:
+    - /kontakt/ vs /kontakt/#kontaktformular
+    - /kontakt/ vs /kontakt/?betref=SEO
+
+    Args:
+        url: URL do normalizacji
+
+    Returns:
+        URL bez fragmentów i parametrów
+    """
+    parsed = urllib.parse.urlparse(url)
+    # Zwracamy tylko scheme + netloc + path (bez query i fragment)
+    return f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+
+
+def should_skip_url(url: str) -> bool:
+    """
+    Sprawdza czy URL powinien być pominięty w analizie.
+    Pomija:
+    - Linki kotwiczne (z fragmentem #)
+    - Linki z parametrami query (?)
+    - Strony paginacji (/page/X/)
+
+    Args:
+        url: URL do sprawdzenia
+
+    Returns:
+        True jeśli URL powinien być pominięty
+    """
+    parsed = urllib.parse.urlparse(url)
+
+    # Pomijamy linki z fragmentami (anchor links)
+    if parsed.fragment:
+        return True
+
+    # Pomijamy linki z parametrami query
+    if parsed.query:
+        return True
+
+    # Pomijamy strony paginacji
+    if re.search(r'/page/\d+/?$', parsed.path):
+        return True
+
+    return False
+
+
 def is_excluded_url(url: str) -> bool:
     """
     Sprawdza, czy URL pasuje do wzorców wykluczonych.

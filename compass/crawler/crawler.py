@@ -20,7 +20,7 @@ from compass.config import (
     USER_AGENT,
     USE_PAGESPEED,
 )
-from compass.utils import same_site, is_excluded_url
+from compass.utils import same_site, is_excluded_url, should_skip_url, normalize_url_for_analysis
 from compass.analyzers import analyze_security_headers
 from compass.integrations import check_pagespeed
 from .fetcher import fetch, parse_page
@@ -116,9 +116,14 @@ async def crawl(start_url: str) -> Dict[str, Any]:
                                 continue
                             if is_excluded_url(link):
                                 continue
-                            if link not in seen and depth + 1 <= MAX_DEPTH:
-                                seen.add(link)
-                                q.append((link, depth + 1))
+                            # Pomijamy linki z fragmentami (#), parametrami (?) i paginacją
+                            if should_skip_url(link):
+                                continue
+                            # Normalizujemy URL do porównania (bez fragmentów i parametrów)
+                            normalized_link = normalize_url_for_analysis(link)
+                            if normalized_link not in seen and depth + 1 <= MAX_DEPTH:
+                                seen.add(normalized_link)
+                                q.append((normalized_link, depth + 1))
                     else:
                         item["note"] = "Pominięto (non-HTML)"
 

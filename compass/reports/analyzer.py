@@ -6,9 +6,24 @@ from typing import Dict, Any, List, Tuple
 from datetime import datetime
 
 
+def is_noindex_page(data: Dict[str, Any]) -> bool:
+    """
+    Sprawdza czy strona ma ustawiony noindex.
+
+    Args:
+        data: Dane strony
+
+    Returns:
+        True jeśli strona ma noindex
+    """
+    robots_meta = data.get('robots_meta', '').lower()
+    return 'noindex' in robots_meta
+
+
 def find_duplicates(all_pages: Dict[str, Any]) -> Dict[str, List]:
     """
     Znajduje duplikaty title i description w przeanalizowanych stronach.
+    Pomija strony wykluczone i noindex.
 
     Args:
         all_pages: Słownik wszystkich przeanalizowanych stron
@@ -20,7 +35,10 @@ def find_duplicates(all_pages: Dict[str, Any]) -> Dict[str, List]:
     desc_map = defaultdict(list)
 
     for url, data in all_pages.items():
+        # Pomijamy strony wykluczone i noindex
         if data.get('is_excluded'):
+            continue
+        if is_noindex_page(data):
             continue
 
         title = data.get('title', '').strip()
@@ -42,6 +60,7 @@ def find_duplicates(all_pages: Dict[str, Any]) -> Dict[str, List]:
 def analyze_issues(all_pages: Dict[str, Any]) -> Dict[str, Any]:
     """
     Analizuje wszystkie strony i znajduje problemy SEO/AEO/GEO/Security.
+    Pomija strony wykluczone i noindex.
 
     Args:
         all_pages: Słownik wszystkich przeanalizowanych stron
@@ -74,7 +93,10 @@ def analyze_issues(all_pages: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     for url, data in all_pages.items():
+        # Pomijamy strony wykluczone i noindex
         if data.get('is_excluded'):
+            continue
+        if is_noindex_page(data):
             continue
 
         ct = data.get('content_type', '') or ''
@@ -309,6 +331,7 @@ def calculate_overall_score(summary: Dict[str, Any]) -> Tuple[int, str]:
 def calculate_summary(all_pages: Dict[str, Any], issues: Dict[str, Any], duplicates: Dict) -> Dict[str, Any]:
     """
     Oblicza podsumowanie statystyk audytu.
+    Pomija strony wykluczone i noindex.
 
     Args:
         all_pages: Słownik wszystkich przeanalizowanych stron
@@ -320,8 +343,13 @@ def calculate_summary(all_pages: Dict[str, Any], issues: Dict[str, Any], duplica
     """
     from compass.config import START_URL
 
-    analyzed_pages = {url: data for url, data in all_pages.items() if not data.get('is_excluded')}
-    excluded_count = len(all_pages) - len(analyzed_pages)
+    # Filtrujemy strony: wykluczamy is_excluded oraz noindex
+    analyzed_pages = {
+        url: data for url, data in all_pages.items()
+        if not data.get('is_excluded') and not is_noindex_page(data)
+    }
+    excluded_count = len([p for p in all_pages.values() if p.get('is_excluded')])
+    noindex_count = len([p for p in all_pages.values() if is_noindex_page(p)])
 
     pages_with_errors = len(issues['critical_errors'])
     pages_ok = len([p for p in analyzed_pages.values() if p.get('status') == 200])
@@ -360,6 +388,7 @@ def calculate_summary(all_pages: Dict[str, Any], issues: Dict[str, Any], duplica
         "pages_crawled": len(all_pages),
         "pages_analyzed": len(analyzed_pages),
         "pages_excluded": excluded_count,
+        "pages_noindex": noindex_count,
         "pages_ok": pages_ok,
         "pages_with_errors": pages_with_errors,
         "missing_title": len(issues['missing_title']),
