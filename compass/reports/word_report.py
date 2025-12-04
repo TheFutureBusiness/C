@@ -1,10 +1,13 @@
 """
 Generator raportu Word (DOCX)
+
+Obsługuje wielojęzyczność - język raportu konfigurowany w config.REPORT_LANGUAGE
 """
 from typing import Dict, Any
 import re
 
-from compass.config import SHOW_REMEDIATIONS, USE_AI_SUMMARY, OPENAI_API_KEY
+from compass.config import SHOW_REMEDIATIONS, USE_AI_SUMMARY, OPENAI_API_KEY, REPORT_LANGUAGE
+from compass.reports.translations import t
 
 try:
     from docx import Document as WordDocument
@@ -83,12 +86,15 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
         print("⚠️  Pomijam generowanie raportu Word")
         return
 
+    # Język raportu
+    lang = REPORT_LANGUAGE
+
     doc = WordDocument()
 
     # =========================
     # OKŁADKA RAPORTU + KPI
     # =========================
-    title = doc.add_heading('SEO / AEO / GEO Audit', 0)
+    title = doc.add_heading(t('report_title', lang), 0)
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     title_run = title.runs[0]
     title_run.font.color.rgb = RGBColor(31, 71, 136)
@@ -102,14 +108,14 @@ def create_word_report(all_pages: Dict[str, Any], summary: Dict[str, Any],
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run(f"Audit-Datum: {summary['generated_at']}")
+    run = p.add_run(f"{t('audit_date', lang)}: {summary['generated_at']}")
     run.font.size = Pt(10)
     run.italic = True
     run.font.color.rgb = RGBColor(120, 120, 120)
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run("Adressaten: Geschäftsführung / Marketing / IT-Team")
+    run = p.add_run(t('recipients', lang))
     run.font.size = Pt(9)
     run.font.color.rgb = RGBColor(120, 120, 120)
 

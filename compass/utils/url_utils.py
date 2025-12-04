@@ -5,7 +5,7 @@ import re
 import urllib.parse
 import tldextract
 from url_normalize import url_normalize
-from compass.config import DOMAIN_SCOPE, EXCLUDED_PATTERNS
+from compass.config import DOMAIN_SCOPE, EXCLUDED_PATTERNS, SYSTEM_PAGE_PATTERNS
 
 
 def same_site(u1: str, u2: str) -> bool:
@@ -111,3 +111,44 @@ def is_excluded_url(url: str) -> bool:
             return True
 
     return False
+
+
+def is_system_page(url: str) -> bool:
+    """
+    Sprawdza, czy URL jest stroną systemową (cart, login, account, itp.).
+    Strony systemowe nie powinny być oceniane pod kątem E-E-A-T, NAP, Meta Description.
+
+    Args:
+        url: URL do sprawdzenia
+
+    Returns:
+        True jeśli URL jest stroną systemową
+    """
+    parsed = urllib.parse.urlparse(url)
+    path = parsed.path.lower()
+    full_url = url.lower()
+
+    for pattern in SYSTEM_PAGE_PATTERNS:
+        if re.search(pattern, path) or re.search(pattern, full_url):
+            return True
+
+    return False
+
+
+def get_canonical_url(url: str) -> str:
+    """
+    Zwraca kanoniczną wersję URL (bez fragmentów, parametrów, trailing slash normalizowany).
+
+    Args:
+        url: URL do normalizacji
+
+    Returns:
+        Kanoniczny URL
+    """
+    parsed = urllib.parse.urlparse(url)
+    # Usuń fragment i query
+    path = parsed.path
+    # Normalizuj trailing slash (dodaj jeśli brak)
+    if path and not path.endswith('/') and '.' not in path.split('/')[-1]:
+        path = path + '/'
+    return f"{parsed.scheme}://{parsed.netloc}{path}"

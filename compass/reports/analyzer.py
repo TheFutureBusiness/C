@@ -57,10 +57,34 @@ def find_duplicates(all_pages: Dict[str, Any]) -> Dict[str, List]:
     return duplicates
 
 
+def is_system_page_data(data: Dict[str, Any]) -> bool:
+    """
+    Sprawdza czy strona jest systemowa na podstawie danych.
+
+    Args:
+        data: Dane strony
+
+    Returns:
+        True jeśli strona jest systemowa
+    """
+    return data.get('is_system_page', False)
+
+
 def analyze_issues(all_pages: Dict[str, Any]) -> Dict[str, Any]:
     """
     Analizuje wszystkie strony i znajduje problemy SEO/AEO/GEO/Security.
-    Pomija strony wykluczone i noindex.
+    Pomija strony wykluczone, noindex, oraz strony systemowe dla odpowiednich analiz.
+
+    WAŻNE:
+    - Strony noindex są całkowicie pomijane
+    - Strony systemowe (cart, login, account) są pomijane dla:
+      - Meta Description (nie wymagają)
+      - E-E-A-T (nie ma sensu oceniać)
+      - NAP (nie ma sensu oceniać)
+      - Schema.org (nie wymagają)
+    - Strony systemowe SĄ analizowane pod kątem:
+      - SSL/Security (każda strona powinna być bezpieczna)
+      - Mobile-friendly (każda strona powinna być responsywna)
 
     Args:
         all_pages: Słownik wszystkich przeanalizowanych stron
@@ -101,8 +125,9 @@ def analyze_issues(all_pages: Dict[str, Any]) -> Dict[str, Any]:
 
         ct = data.get('content_type', '') or ''
         status = data.get('status')
+        is_system = is_system_page_data(data)
 
-        # Błędy krytyczne
+        # Błędy krytyczne - analizujemy wszystkie strony
         if data.get('error') or (status and 400 <= status < 500):
             if 'text/html' in ct or not ct:
                 issues['critical_errors'].append({
@@ -113,6 +138,54 @@ def analyze_issues(all_pages: Dict[str, Any]) -> Dict[str, Any]:
 
         if not status or status >= 400:
             continue
+
+        # === ANALIZY DLA WSZYSTKICH STRON (włącznie z systemowymi) ===
+
+        # Brak viewport (mobile-friendly) - każda strona powinna być responsywna
+        if not data.get('is_mobile_friendly'):
+            issues['no_viewport'].append(url)
+
+        # Problemy z bezpieczeństwem - każda strona powinna być bezpieczna
+        security = data.get('security', {})
+
+        # Brak SSL
+        if not security.get('has_ssl'):
+            issues['no_ssl'].append(url)
+
+        # Słabe bezpieczeństwo
+        sec_percentage = security.get('security_percentage', 100)
+        if sec_percentage < 50:
+            issues['poor_security'].append({
+                'url': url,
+                'security_percentage': sec_percentage,
+                'security_level': security.get('security_level'),
+                'missing_headers': security.get('missing_critical', []),
+            })
+
+        # Brakujące nagłówki bezpieczeństwa
+        headers_count = security.get('headers_count', 0)
+        if headers_count < 3:
+            issues['missing_security_headers'].append({
+                'url': url,
+                'headers_count': headers_count,
+                'missing_critical': security.get('missing_critical', []),
+            })
+
+        # Mixed content
+        if security.get('has_mixed_content'):
+            issues['mixed_content'].append(url)
+
+        # Information disclosure
+        if security.get('exposes_server_info') or security.get('exposes_tech_stack'):
+            issues['info_disclosure'].append({
+                'url': url,
+                'server_header': security.get('server_header'),
+                'powered_by': security.get('powered_by_header'),
+            })
+
+        # === ANALIZY TYLKO DLA STRON TREŚCIOWYCH (nie systemowych) ===
+        if is_system:
+            continue  # Pomijamy dalszą analizę dla stron systemowych
 
         # Brak title
         if not data.get('title'):
@@ -166,10 +239,6 @@ def analyze_issues(all_pages: Dict[str, Any]) -> Dict[str, Any]:
                 'alt_ratio': data.get('img_alt_ratio'),
             })
 
-        # Brak viewport (mobile-friendly)
-        if not data.get('is_mobile_friendly'):
-            issues['no_viewport'].append(url)
-
         # Brak Open Graph
         if not data.get('has_og_image') or not data.get('has_og_title'):
             issues['no_og_tags'].append({
@@ -187,7 +256,7 @@ def analyze_issues(all_pages: Dict[str, Any]) -> Dict[str, Any]:
         if data.get('schema_count', 0) == 0:
             issues['missing_schema'].append(url)
 
-        # Słabe sygnały E-E-A-T
+        # Słabe sygnały E-E-A-T - tylko dla stron treściowych
         eeat = data.get('eeat_signals', {})
         if eeat.get('eeat_percentage', 100) < 50:
             issues['weak_eeat'].append({
@@ -197,7 +266,7 @@ def analyze_issues(all_pages: Dict[str, Any]) -> Dict[str, Any]:
                 'missing': [k for k, v in eeat.items() if k.startswith('has_') and not v]
             })
 
-        # Słabe NAP (Local SEO)
+        # Słabe NAP (Local SEO) - tylko dla stron treściowych
         nap = data.get('nap_signals', {})
         if nap.get('nap_score', 0) < 2:
             issues['poor_local_seo'].append({
@@ -215,44 +284,6 @@ def analyze_issues(all_pages: Dict[str, Any]) -> Dict[str, Any]:
                 'url': url,
                 'word_count': word_count,
                 'text_len': data.get('text_len', 0)
-            })
-
-        # Problemy z bezpieczeństwem
-        security = data.get('security', {})
-
-        # Brak SSL
-        if not security.get('has_ssl'):
-            issues['no_ssl'].append(url)
-
-        # Słabe bezpieczeństwo
-        sec_percentage = security.get('security_percentage', 100)
-        if sec_percentage < 50:
-            issues['poor_security'].append({
-                'url': url,
-                'security_percentage': sec_percentage,
-                'security_level': security.get('security_level'),
-                'missing_headers': security.get('missing_critical', []),
-            })
-
-        # Brakujące nagłówki bezpieczeństwa
-        headers_count = security.get('headers_count', 0)
-        if headers_count < 3:
-            issues['missing_security_headers'].append({
-                'url': url,
-                'headers_count': headers_count,
-                'missing_critical': security.get('missing_critical', []),
-            })
-
-        # Mixed content
-        if security.get('has_mixed_content'):
-            issues['mixed_content'].append(url)
-
-        # Information disclosure
-        if security.get('exposes_server_info') or security.get('exposes_tech_stack'):
-            issues['info_disclosure'].append({
-                'url': url,
-                'server_header': security.get('server_header'),
-                'powered_by': security.get('powered_by_header'),
             })
 
     return issues
@@ -350,31 +381,38 @@ def calculate_summary(all_pages: Dict[str, Any], issues: Dict[str, Any], duplica
     }
     excluded_count = len([p for p in all_pages.values() if p.get('is_excluded')])
     noindex_count = len([p for p in all_pages.values() if is_noindex_page(p)])
+    system_pages_count = len([p for p in all_pages.values() if is_system_page_data(p)])
+
+    # Strony treściowe (nie systemowe, nie wykluczone, nie noindex)
+    content_pages = {
+        url: data for url, data in analyzed_pages.items()
+        if not is_system_page_data(data)
+    }
 
     pages_with_errors = len(issues['critical_errors'])
     pages_ok = len([p for p in analyzed_pages.values() if p.get('status') == 200])
 
-    # Mobile-friendly
+    # Mobile-friendly - dla wszystkich stron
     mobile_friendly = sum(1 for p in analyzed_pages.values() if p.get('is_mobile_friendly'))
     mobile_percentage = round(mobile_friendly / max(1, len(analyzed_pages)) * 100, 1)
 
-    # Schema.org
-    pages_with_schema = sum(1 for p in analyzed_pages.values() if p.get('schema_count', 0) > 0)
-    avg_schema_types = sum(p.get('schema_count', 0) for p in analyzed_pages.values()) / max(1, len(analyzed_pages))
+    # Schema.org - tylko dla stron treściowych
+    pages_with_schema = sum(1 for p in content_pages.values() if p.get('schema_count', 0) > 0)
+    avg_schema_types = sum(p.get('schema_count', 0) for p in content_pages.values()) / max(1, len(content_pages))
 
-    # E-E-A-T
+    # E-E-A-T - tylko dla stron treściowych
     avg_eeat = sum(
         p.get('eeat_signals', {}).get('eeat_percentage', 0)
-        for p in analyzed_pages.values()
-    ) / max(1, len(analyzed_pages))
+        for p in content_pages.values()
+    ) / max(1, len(content_pages))
 
-    # Local SEO (NAP)
+    # Local SEO (NAP) - tylko dla stron treściowych
     local_optimized = sum(
-        1 for p in analyzed_pages.values()
+        1 for p in content_pages.values()
         if p.get('nap_signals', {}).get('nap_score', 0) >= 2
     )
 
-    # Bezpieczeństwo
+    # Bezpieczeństwo - dla wszystkich stron
     avg_security = sum(
         p.get('security', {}).get('security_percentage', 0)
         for p in analyzed_pages.values()
@@ -387,6 +425,8 @@ def calculate_summary(all_pages: Dict[str, Any], issues: Dict[str, Any], duplica
         "start_url": START_URL,
         "pages_crawled": len(all_pages),
         "pages_analyzed": len(analyzed_pages),
+        "pages_content": len(content_pages),  # Strony treściowe
+        "pages_system": system_pages_count,  # Strony systemowe
         "pages_excluded": excluded_count,
         "pages_noindex": noindex_count,
         "pages_ok": pages_ok,

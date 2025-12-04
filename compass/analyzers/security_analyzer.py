@@ -148,6 +148,28 @@ def analyze_security_headers(headers: Dict[str, str], url: str, html: str = "") 
         if not check["present"] and check["severity"] in ["high", "medium"]
     ]
 
+    # Określenie rzeczywistego ryzyka (nie tylko brakujące nagłówki)
+    # WAŻNE: Brakujące nagłówki to "hardening" - nie oznaczają aktywnej podatności
+    has_critical_issues = not has_ssl or has_mixed_content  # To są faktyczne problemy
+    has_hardening_issues = len(missing_critical) > 0  # To jest brak "hardening"
+
+    # Generowanie spójnego opisu bezpieczeństwa
+    if has_critical_issues:
+        if not has_ssl:
+            security_description = "Brak HTTPS - dane nie są szyfrowane"
+        else:
+            security_description = "Mixed content - niektóre zasoby ładowane przez HTTP"
+        security_risk = "high"
+    elif security_percentage < 50:
+        security_description = "Brak zalecanych nagłówków bezpieczeństwa (hardening)"
+        security_risk = "medium"
+    elif security_percentage < 70:
+        security_description = "Częściowy hardening - brakuje niektórych nagłówków"
+        security_risk = "low"
+    else:
+        security_description = "Dobre zabezpieczenia"
+        security_risk = "none"
+
     return {
         "security_checks": security_checks,
         "has_ssl": has_ssl,
@@ -165,4 +187,9 @@ def analyze_security_headers(headers: Dict[str, str], url: str, html: str = "") 
         "missing_critical": missing_critical,
         "headers_count": len([c for c in security_checks.values() if c["present"]]),
         "total_headers": len(security_checks),
+        # Nowe pola dla spójnego raportowania
+        "has_critical_issues": has_critical_issues,
+        "has_hardening_issues": has_hardening_issues,
+        "security_description": security_description,
+        "security_risk": security_risk,  # "high", "medium", "low", "none"
     }
